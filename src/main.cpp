@@ -6,5 +6,15 @@
 #include "Surface.h"
 
 int main(int argc, char* argv[]) {
-	printf("Under von Construction\n");
+	SurfaceTriangle *triangle = new SurfaceTriangle;
+
+	triangle->Subdivide();
+	triangle->Subdivide();
+	triangle->Subdivide();
+	triangle->Subdivide();
+
+	printf("Under von Construction, %d\n", sizeof(SurfaceTriangle));
+
+	getchar();
+	getchar();
 }
