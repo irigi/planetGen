@@ -19,6 +19,13 @@ SurfaceTriangle::SurfaceTriangle() {
 	AllAround[1] = this;
 	AllAround[2] = this;
 
+	DivisionField = new SurfaceTriangle *[4];
+
+	DivisionField[0] = NULL;
+	DivisionField[1] = NULL;
+	DivisionField[2] = NULL;
+	DivisionField[3] = NULL;
+
 	u_coordinate = 0;
 	v_coordinate = 0;
 
@@ -33,6 +40,8 @@ SurfaceTriangle::SurfaceTriangle() {
 
 SurfaceTriangle::~SurfaceTriangle() {
 	delete data;
+	delete [] AllAround;
+	delete [] DivisionField;
 }
 
 SurfaceTriangle *SurfaceTriangle::Around(int index) {
@@ -55,30 +64,30 @@ void SurfaceTriangle::SetAround(int index, SurfaceTriangle * target) {
 	 AllAround[index] = target;
 }
 
-void SurfaceTriangle::SubdivideThis() {
-	SurfaceTriangle *tmp;
-
-	// we do not want to divide some cells
-	if(_divideImunity)
-		return;
-
-	tmp = AllAround[2];
-
-	AllAround[2] = new SurfaceTriangle();
-
-	AllAround[2]->SetAround(0, this);
-	AllAround[2]->SetAround(1, new SurfaceTriangle());
-	AllAround[2]->SetAround(2, new SurfaceTriangle());
-
-	AllAround[2]->Around(1)->SetAround(0, this->Around(2));
-	AllAround[2]->Around(1)->SetAround(1, this->Around(1));
-	AllAround[2]->Around(1)->SetAround(2, tmp);
-
-	AllAround[2]->Around(2)->SetAround(0, this->Around(2));
-	AllAround[2]->Around(2)->SetAround(1, tmp);
-	AllAround[2]->Around(2)->SetAround(2, this->Around(0));
-
-}
+//void SurfaceTriangle::SubdivideThis() {
+//	SurfaceTriangle *tmp;
+//
+//	// we do not want to divide some cells
+//	if(_divideImunity)
+//		return;
+//
+//	tmp = AllAround[2];
+//
+//	AllAround[2] = new SurfaceTriangle();
+//
+//	AllAround[2]->SetAround(0, this);
+//	AllAround[2]->SetAround(1, new SurfaceTriangle());
+//	AllAround[2]->SetAround(2, new SurfaceTriangle());
+//
+//	AllAround[2]->Around(1)->SetAround(0, this->Around(2));
+//	AllAround[2]->Around(1)->SetAround(1, this->Around(1));
+//	AllAround[2]->Around(1)->SetAround(2, tmp);
+//
+//	AllAround[2]->Around(2)->SetAround(0, this->Around(2));
+//	AllAround[2]->Around(2)->SetAround(1, tmp);
+//	AllAround[2]->Around(2)->SetAround(2, this->Around(0));
+//
+//}
 
 void SurfaceTriangle::NullControls() {
 	this->NullControlsInternal(SURFACE_CONTROL_INTERNAL, true);
@@ -114,31 +123,102 @@ void SurfaceTriangle::NullControlsInternal(const int stage, bool delete_234contr
 			AllAround[2]->NullControlsInternal(stage);
 }
 
-void SurfaceTriangle::SubdivideSurface() {
-	this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
-	this->SubdivideSurfaceInternal();
+SurfaceTriangle * SurfaceTriangle::SubdivideSurface() {
+	SurfaceTriangle * ret;
+
+	this->FloodTagCtrl234(2, ALMOST_INFINITY);
+	ret = this->SubdivideSurfaceInternal(NULL, NULL, NULL, 0);
+	this->NullControls();
+	return ret;
 }
 
-void SurfaceTriangle::SubdivideSurfaceInternal() {
-	if(_intControl1 == SURFACE_CONTROL_TAG1)
-			_intControl1 = SURFACE_CONTROL_CLEAN;
-		else
-			return;
+SurfaceTriangle * SurfaceTriangle::SubdivideSurfaceInternal(SurfaceTriangle *caller, SurfaceTriangle ** neighbor1, SurfaceTriangle ** neighbor2, int tag) {
+//	printf("zavolan na list %d z listu %d\n", _id, caller == NULL ? -1 : caller->GetID());
 
-	// flood subdivide
-	if(AllAround[0]->IntControl1() == SURFACE_CONTROL_TAG1) {
-		AllAround[0]->SubdivideSurfaceInternal();
+	if(tag <= _intControl2)
+		_intControl2 = tag;
+
+	// if he doesn't divide, HE is the neighbor of all caller children
+	if(_divideImunity) {
+		*neighbor1 = this;
+		*neighbor2 = this;
+
+		return this;
 	}
 
-	if(AllAround[1]->IntControl1() == SURFACE_CONTROL_TAG1) {
-			AllAround[1]->SubdivideSurfaceInternal();
+
+	// if there are no children, create them
+	if(DivisionField[0] == NULL) {
+//		printf("tvorim deti listu %d\n", _id);
+
+		DivisionField[0] = new SurfaceTriangle();
+		DivisionField[1] = new SurfaceTriangle();
+		DivisionField[2] = new SurfaceTriangle();
+		DivisionField[3] = new SurfaceTriangle();
+
+		// set up bonds between them
+		DivisionField[0]->SetAround(0, DivisionField[1]);
+		DivisionField[0]->SetAround(1, DivisionField[2]);
+		DivisionField[0]->SetAround(2, DivisionField[3]);
+
+		DivisionField[1]->SetAround(0, DivisionField[0]);
+		DivisionField[2]->SetAround(0, DivisionField[0]);
+		DivisionField[3]->SetAround(0, DivisionField[0]);
+
+//		printf("     %d %d %d %d\n", DivisionField[0]->GetID(),DivisionField[1]->GetID(),DivisionField[2]->GetID(),DivisionField[3]->GetID());
 	}
 
-	if(AllAround[2]->IntControl1() == SURFACE_CONTROL_TAG1) {
-			AllAround[2]->SubdivideSurfaceInternal();
+	SurfaceTriangle * nei1 = NULL, *nei2 = NULL;
+
+	// if we lack information of neighbouring children of AllAround[0], we ask for it and fill the info
+	if((DivisionField[1]->Around(2) == DivisionField[1] || DivisionField[2]->Around(1) == DivisionField[2]) && tag <= _intControl2) {
+			printf("volam 1 (%d)\n", AllAround[0]->GetID());
+			AllAround[0]->SubdivideSurfaceInternal(this, &nei1, &nei2, tag+1);
+			DivisionField[1]->SetAround(2, nei2); // every big triangle is clockwise oriented
+			DivisionField[2]->SetAround(1, nei1);
+			printf("  dostavam 1 (%d %d)\n", nei1->GetID(), nei2->GetID());
 	}
 
-	this->SubdivideThis();
+	// if we lack information of neighbouring children of AllAround[1], we ask for it and fill the info
+	if((DivisionField[2]->Around(2) == DivisionField[2] || DivisionField[3]->Around(1) == DivisionField[3]) && tag <= _intControl2) {
+			printf("volam 2 (%d)\n", AllAround[1]->GetID());
+			AllAround[1]->SubdivideSurfaceInternal(this, &nei1, &nei2, tag+1);
+			DivisionField[2]->SetAround(2, nei2); // every big triangle is clockwise oriented
+			DivisionField[3]->SetAround(1, nei1);
+			printf("  dostavam 2 (%d %d)\n", nei1->GetID(), nei2->GetID());
+	}
+
+	// if we lack information of neighbouring children of AllAround[2], we ask for it and fill the info
+	if((DivisionField[3]->Around(2) == DivisionField[3] || DivisionField[1]->Around(1) == DivisionField[1]) && tag <= _intControl2) {
+		printf("volam 3 (%d)\n", AllAround[2]->GetID());
+			AllAround[2]->SubdivideSurfaceInternal(this, &nei1, &nei2, tag+1);
+			DivisionField[3]->SetAround(2, nei2); // every big triangle is clockwise oriented
+			DivisionField[1]->SetAround(1, nei1);
+			printf("  dostavam 3 (%d %d)\n", nei1->GetID(), nei2->GetID());
+	}
+
+	if(caller == NULL || neighbor1 == NULL || neighbor2 == NULL)
+		return DivisionField[0];
+
+	// in all cases inform the caller of its neighbors
+	if(caller == AllAround[0]) {
+//		printf("      vracim 1 (%d %d)\n", caller->GetID(), AllAround[0]->GetID());
+		*neighbor1 = DivisionField[1];
+		*neighbor2 = DivisionField[2];
+	}
+	if(caller == AllAround[1]) {
+//		printf("      vracim 2 (%d %d)\n", caller->GetID(), AllAround[0]->GetID());
+		*neighbor1 = DivisionField[2];
+		*neighbor2 = DivisionField[3];
+	}
+	if(caller == AllAround[2]) {
+//		printf("      vracim 3 (%d %d)\n", caller->GetID(), AllAround[0]->GetID());
+		*neighbor1 = DivisionField[3];
+		*neighbor2 = DivisionField[1];
+	}
+
+	return DivisionField[0];
+
 }
 
 int SurfaceTriangle::GetTagCtrl234(int ctrl_index) {

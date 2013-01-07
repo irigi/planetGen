@@ -25,9 +25,9 @@ public:
 	double u_coordinate, v_coordinate;
 
 	void SetAround(int index, SurfaceTriangle * target);
-	void SubdivideThis();					// subdivides current triangle into four
-	void SubdivideSurface();				// subdivides whole surface
-	void NullControls();						// nulls all ctrl variables
+	//void SubdivideThis();								// subdivides current triangle into four
+	SurfaceTriangle * SubdivideSurface();	// subdivides whole surface, returns one of the children of the caller cell of the new surface
+	void NullControls();								// nulls all ctrl variables
 
 	void FloodTagCtrl234(int ctrl_index, int tag);    	// floods tag value into ctrl of given index
 	int WaveTagCtrl234(int ctrl_index, int tag);		 	// floods tag value into ctrl of given index, it increases the value as it goes
@@ -45,13 +45,14 @@ public:
 
 private:
 	void NullControlsInternal(const int stage, bool delete_234controls = false);
-	void SubdivideSurfaceInternal();
+	SurfaceTriangle * SubdivideSurfaceInternal(SurfaceTriangle *caller, SurfaceTriangle ** soused1, SurfaceTriangle ** soused2, int tag);
 	void FloodTagCtrl1(int tag);									// floods tag-value from given triangle, stores it in ctrl1
 	int WaveTagCtrl234Internal(int ctrl_index, int tag, bool first = true);
 	SurfaceTriangle * FollowLineTagCtrl234Internal(int ctrl_index, int lead_index, int tag, SurfaceTriangle * cameFrom, int minVal, int maxVal);
 	void PrintSurfaceInternal();
 
-	SurfaceTriangle ** AllAround;
+	SurfaceTriangle ** AllAround;									// neighbors of the cell
+	SurfaceTriangle ** DivisionField;								// this is used by subdivision algorithm
 	int _intControl1, _intControl2, _intControl3, _id;
 	bool _divideImunity;												// if (divideImunity), the cell doesn't divide
 

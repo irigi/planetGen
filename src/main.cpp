@@ -30,17 +30,24 @@ int main(int argc, char* argv[]) {
 	triangle4->SetAround(2, triangle3);
 
 
-	triangle1->SubdivideSurface();
-	triangle1->SubdivideSurface();
+
+	//triangle1->SubdivideSurface();
 	//triangle1->SubdivideSurface();
 
-	int out1 = triangle1->WaveTagCtrl234(2, 0);
-	SurfaceTriangle * bodRovniku = triangle1->FindFirstTagValue(2, out1/2);
+	SurfaceTriangle *dite;
+	dite = triangle1->SubdivideSurface();
+	dite = dite->SubdivideSurface();
+	dite = dite->SubdivideSurface();
+
+
+	int out1 = dite->WaveTagCtrl234(2, 0);
+
+	SurfaceTriangle * bodRovniku = dite->FindFirstTagValue(2, out1/2);
 	int out2 = bodRovniku->FollowLineTagCtrl234(3, 2, 0);
 
 	printf("Under von Construction, %d %d\n", out1, out2);
 
-	triangle1->PrintSurface();
+	dite->PrintSurface();
 
 	//getchar();
 	//getchar();
