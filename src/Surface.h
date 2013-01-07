@@ -34,6 +34,7 @@ public:
 	int FollowLineTagCtrl234(int ctrl_index, int lead_index, int tag);	// increases the ctrl variable of given index along to line
 	SurfaceTriangle * FindFirstTagValue(int ctrl_index, int tag);
 	int GetTagCtrl234(int ctrl_index);							// returns value of the ctrl variable
+	int GetMaxTagCtrl234(int ctrl_index);					// returns max value of the ctrl variable on the surface
 	int GetID() { return _id; }
 	void PrintSurface();
 
@@ -50,6 +51,7 @@ private:
 	int WaveTagCtrl234Internal(int ctrl_index, int tag, bool first = true);
 	SurfaceTriangle * FollowLineTagCtrl234Internal(int ctrl_index, int lead_index, int tag, SurfaceTriangle * cameFrom, int minVal, int maxVal);
 	void PrintSurfaceInternal();
+	int GetMaxTagCtrl234Internal(int ctrl_index);
 
 	SurfaceTriangle ** AllAround;									// neighbors of the cell
 	SurfaceTriangle ** DivisionField;								// this is used by subdivision algorithm

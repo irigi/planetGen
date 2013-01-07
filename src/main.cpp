@@ -45,10 +45,9 @@ int main(int argc, char* argv[]) {
 	SurfaceTriangle * bodRovniku = dite->FindFirstTagValue(2, out1/2);
 	int out2 = bodRovniku->FollowLineTagCtrl234(3, 2, 0);
 
-	printf("Under von Construction, %d %d\n", out1, out2);
-
 	dite->PrintSurface();
 
+	printf("Under von Construction, %d %d\n", out1, out2);
 	//getchar();
 	//getchar();
 }
