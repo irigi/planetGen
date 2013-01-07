@@ -32,11 +32,16 @@ int main(int argc, char* argv[]) {
 
 	triangle1->SubdivideSurface();
 	triangle1->SubdivideSurface();
+	//triangle1->SubdivideSurface();
 
-	triangle1->NullControls();
+	int out1 = triangle1->WaveTagCtrl234(2, 0);
+	SurfaceTriangle * bodRovniku = triangle1->FindFirstTagValue(2, out1/2);
+	int out2 = bodRovniku->FollowLineTagCtrl234(3, 2, 0);
 
-	printf("Under von Construction, %lu\n", sizeof(SurfaceTriangle));
+	printf("Under von Construction, %d %d\n", out1, out2);
 
-	getchar();
-	getchar();
+	triangle1->PrintSurface();
+
+	//getchar();
+	//getchar();
 }
