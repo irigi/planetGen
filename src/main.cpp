@@ -8,10 +8,12 @@
 int main(int argc, char* argv[]) {
 	SurfaceTriangle *triangle = new SurfaceTriangle;
 
-	triangle->Subdivide();
-	triangle->Subdivide();
-	triangle->Subdivide();
-	triangle->Subdivide();
+	triangle->SubdivideThis();
+	triangle->SubdivideThis();
+	triangle->SubdivideThis();
+	triangle->SubdivideThis();
+
+	triangle->NullControls();
 
 	printf("Under von Construction, %d\n", sizeof(SurfaceTriangle));
 
