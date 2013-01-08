@@ -21,9 +21,6 @@ SurfaceTriangle::SurfaceTriangle() {
 	DivisionField[2] = NULL;
 	DivisionField[3] = NULL;
 
-	u_coordinate = 0;
-	v_coordinate = 0;
-
 	_intControl1 = SURFACE_CONTROL_CLEAN;
 	_intControl2 = 0;
 	_intControl3 = 0;
@@ -360,7 +357,59 @@ SurfaceTriangle * SurfaceTriangle::FindFirstTagValue(int ctrl_index, int tag) {
 	}
 
 	return NULL;
+}
 
+SurfaceTriangle * SurfaceTriangle::FindMinSquareValue(int ctrl_index1, int ctrl_index2, int tag1, int tag2) {
+	this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
+	this->FindMinSquareValueInternal(ctrl_index1, ctrl_index2, tag1, tag2);
+}
+
+SurfaceTriangle * SurfaceTriangle::FindMinSquareValueInternal(int ctrl_index1, int ctrl_index2, int tag1, int tag2) {
+	if(_intControl1 != SURFACE_CONTROL_TAG1)
+		return NULL;
+
+	_intControl1 = SURFACE_CONTROL_CLEAN;
+
+	// illegal index variable
+	if(ctrl_index1 <= 1 || ctrl_index1 > MaxIntCtrl)
+		return NULL;
+	if(ctrl_index2 <= 1 || ctrl_index2 > MaxIntCtrl)
+		return NULL;
+
+	int *ctrl1 = this->GetTagCtrl234Pointer(ctrl_index1);
+	int *ctrl2 = this->GetTagCtrl234Pointer(ctrl_index2);
+
+	SurfaceTriangle * Pa1 = AllAround[0]->FindMinSquareValueInternal(ctrl_index1, ctrl_index2, tag1, tag2);
+	SurfaceTriangle * Pa2 = AllAround[1]->FindMinSquareValueInternal(ctrl_index1, ctrl_index2, tag1, tag2);
+	SurfaceTriangle * Pa3 = AllAround[2]->FindMinSquareValueInternal(ctrl_index1, ctrl_index2, tag1, tag2);
+
+	double a1 = ALMOST_INFINITY, a2 = ALMOST_INFINITY, a3 = ALMOST_INFINITY, thisVal;
+	if(Pa1 != NULL)
+		a1 = (Pa1->GetTagCtrl234(ctrl_index1) - tag1)*(Pa1->GetTagCtrl234(ctrl_index1) - tag1)
+				+ (Pa1->GetTagCtrl234(ctrl_index2) - tag2)*(Pa1->GetTagCtrl234(ctrl_index2) - tag2);
+	if(Pa2 != NULL)
+		a2 = (Pa2->GetTagCtrl234(ctrl_index1) - tag1)*(Pa2->GetTagCtrl234(ctrl_index1) - tag1)
+				+ (Pa2->GetTagCtrl234(ctrl_index2) - tag2)*(Pa2->GetTagCtrl234(ctrl_index2) - tag2);
+	if(Pa3 != NULL)
+		a3 = (Pa3->GetTagCtrl234(ctrl_index1) - tag1)*(Pa3->GetTagCtrl234(ctrl_index1) - tag1)
+				+ (Pa3->GetTagCtrl234(ctrl_index2) - tag2)*(Pa3->GetTagCtrl234(ctrl_index2) - tag2);
+		thisVal = (*ctrl1 - tag1)*(*ctrl1 - tag1) + (*ctrl2 - tag2)*(*ctrl2 - tag2);
+
+		if(thisVal <= a1 && thisVal <= a2 && thisVal <= a3)
+			return this;
+		else {
+			if(a1 <= a2 && a1 <= a3 && Pa1 != NULL)
+				return Pa1;
+
+			if(a2 <= a1 && a2 <= a3 && Pa2 != NULL)
+						return Pa2;
+
+			if(Pa3 != NULL)
+				return Pa3;
+		}
+
+		printf("error\n");
+		return this;
 }
 
 void SurfaceTriangle::PrintSurface() {
@@ -370,10 +419,11 @@ void SurfaceTriangle::PrintSurface() {
 
 void SurfaceTriangle::PrintSurfaceInternal() {
 	if(_intControl1 == SURFACE_CONTROL_TAG1) {
-		printf("%d (%d %d %d), %d\n",_intControl1, _intControl2, _intControl3, _intControl4, _id);
-		printf("  soused - (%d %d), %d\n",AllAround[0]->GetTagCtrl234(2),AllAround[0]->GetTagCtrl234(3), AllAround[0]->GetID());
-		printf("  soused - (%d %d), %d\n",AllAround[1]->GetTagCtrl234(2),AllAround[1]->GetTagCtrl234(3), AllAround[1]->GetID());
-		printf("  soused - (%d %d), %d\n",AllAround[2]->GetTagCtrl234(2),AllAround[2]->GetTagCtrl234(3), AllAround[2]->GetID());
+		printf("%d (%d %d %d, %.3f %.3f), %d\n",_intControl1, _intControl2, _intControl3, _intControl4,
+				data->u_coordinate*180/M_PI, data->v_coordinate*180/M_PI, _id);
+		printf("  soused - (%d %d %d), %d\n",AllAround[0]->GetTagCtrl234(2),AllAround[0]->GetTagCtrl234(3),AllAround[0]->GetTagCtrl234(4), AllAround[0]->GetID());
+		printf("  soused - (%d %d %d), %d\n",AllAround[1]->GetTagCtrl234(2),AllAround[1]->GetTagCtrl234(3),AllAround[1]->GetTagCtrl234(4), AllAround[1]->GetID());
+		printf("  soused - (%d %d %d), %d\n",AllAround[2]->GetTagCtrl234(2),AllAround[2]->GetTagCtrl234(3),AllAround[2]->GetTagCtrl234(4), AllAround[2]->GetID());
 	} else return;
 
 	_intControl1 = SURFACE_CONTROL_CLEAN;
@@ -513,6 +563,32 @@ void SurfaceTriangle::CreateD20() {
 	d20->SetAround(2, d08);
 }
 
+void SurfaceTriangle::CreateD4() {
+		// 1d4 for testing
+		SurfaceTriangle *triangle1 = this;
+
+		triangle1->SetAround(0, new SurfaceTriangle());
+		triangle1->SetAround(1, new SurfaceTriangle());
+		triangle1->SetAround(2, new SurfaceTriangle());
+
+		SurfaceTriangle *triangle2 = triangle1->Around(0);
+		SurfaceTriangle *triangle3 = triangle1->Around(1);
+		SurfaceTriangle *triangle4 = triangle1->Around(2);
+
+		triangle2->SetAround(0, triangle1);
+		triangle2->SetAround(1, triangle3);
+		triangle2->SetAround(2, triangle4);
+
+		triangle3->SetAround(0, triangle1);
+		triangle3->SetAround(1, triangle4);
+		triangle3->SetAround(2, triangle2);
+
+		triangle4->SetAround(0, triangle1);
+		triangle4->SetAround(1, triangle2);
+		triangle4->SetAround(2, triangle3);
+
+}
+
 int* SurfaceTriangle::GetTagCtrl234Pointer(int ctrl_index) {
 	int *control = NULL;
 
@@ -532,4 +608,41 @@ int* SurfaceTriangle::GetTagCtrl234Pointer(int ctrl_index) {
 	}
 
 	return control;
+}
+
+void SurfaceTriangle::CreateSphericalCoordinates() {
+	// point at which this is called will be the north pole
+
+	this->NullControls();
+	int out1 = this->WaveTagCtrl234(2, 0);
+	SurfaceTriangle * bodRovniku = this->FindFirstTagValue(2, out1/2);
+
+	if(bodRovniku == NULL)
+		return;
+
+	int out2 = bodRovniku->WaveTagCtrl234(3, 0);
+	SurfaceTriangle * bod2Rovniku = this->FindMinSquareValue(2,3, out1/2, out2/2);
+	int out3 = bod2Rovniku->WaveTagCtrl234(4, 0);
+
+	this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
+	this->CreateSphericalCoordinatesInternal(out1, out2, out3);
+}
+
+void SurfaceTriangle::CreateSphericalCoordinatesInternal(int max2, int max3, int max4) {
+	if(_intControl1 != SURFACE_CONTROL_TAG1)
+		return;
+
+	_intControl1 = SURFACE_CONTROL_CLEAN;
+
+	this->data->u_coordinate = (_intControl2 - max2/2.0)/max2 * M_PI;
+
+	double
+		x = sin((_intControl3 - max3/2.0)/max3 * M_PI),
+		y = sin((_intControl4 - max4/2.0)/max4 * M_PI);
+
+	this->data->v_coordinate = atan2(x, y);
+
+	AllAround[0]->CreateSphericalCoordinatesInternal(max2, max3, max4);
+	AllAround[1]->CreateSphericalCoordinatesInternal(max2, max3, max4);
+	AllAround[2]->CreateSphericalCoordinatesInternal(max2, max3, max4);
 }

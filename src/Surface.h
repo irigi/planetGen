@@ -18,29 +18,34 @@ public:
 	SurfaceTriangle * Around(int index);
 	PhysicalData * data;
 
-	double u_coordinate, v_coordinate;
-
 	void SetAround(int index, SurfaceTriangle * target);
-	//void SubdivideThis();								// subdivides current triangle into four
+	void SetDivideImunity(bool value) { _divideImunity = value; };
+
 	SurfaceTriangle * SubdivideSurface();	// subdivides whole surface, returns one of the children of the caller cell of the new surface
 	void NullControls();								// nulls all ctrl variables
 
 	void FloodTagCtrl234(int ctrl_index, int tag);    	// floods tag value into ctrl of given index
 	int WaveTagCtrl234(int ctrl_index, int tag);		 	// floods tag value into ctrl of given index, it increases the value as it goes
 	int FollowLineTagCtrl234(int ctrl_index, int lead_index, int tag);	// increases the ctrl variable of given index along to line
-	SurfaceTriangle * FindFirstTagValue(int ctrl_index, int tag);
+
+	SurfaceTriangle * FindFirstTagValue(int ctrl_index, int tag); // return some point with given tag value, if not found, return NULL
+	SurfaceTriangle * FindMinSquareValue(int ctrl_index1, int ctrl_index2, int tag1, int tag2); // return some point with given tag value, if not found, return NULL
+	SurfaceTriangle * FindTrulyRandomPoint();
+
 	int GetTagCtrl234(int ctrl_index);							// returns value of the ctrl variable
 	int GetMaxTagCtrl234(int ctrl_index);					// returns max value of the ctrl variable on the surface
 	int GetID() { return _id; }
-	void PrintSurface();
 
-	void SetDivideImunity(bool value) { _divideImunity = value; };
+	void PrintSurface();
 
 	static const int MaxIntCtrl = 4;		// how many int ctrl variables we have (ctrl 1 is reserved)
 
 	int IntControl1(void) {return _intControl1; }
 
 	void CreateD20();
+	void CreateD4();
+
+	void CreateSphericalCoordinates();
 
 private:
 	void NullControlsInternal(const int stage, bool delete_234controls = false);
@@ -50,6 +55,8 @@ private:
 	SurfaceTriangle * FollowLineTagCtrl234Internal(int ctrl_index, int lead_index, int tag, SurfaceTriangle * cameFrom, int minVal, int maxVal);
 	void PrintSurfaceInternal();
 	int GetMaxTagCtrl234Internal(int ctrl_index);
+	SurfaceTriangle * FindMinSquareValueInternal(int ctrl_index1, int ctrl_index2, int tag1, int tag2);
+	void CreateSphericalCoordinatesInternal(int max2, int max3, int max4);
 	int* GetTagCtrl234Pointer(int ctrl_index);			// returns address of the ctrl variable
 
 	SurfaceTriangle ** AllAround;									// neighbors of the cell

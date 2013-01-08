@@ -5,4 +5,5 @@ class PhysicalData {
 public:
 	PhysicalData();
 	double temperature, rainfall, solarConstant;
+	double u_coordinate, v_coordinate;
 };

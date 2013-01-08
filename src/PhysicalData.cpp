@@ -9,4 +9,7 @@ PhysicalData::PhysicalData() {
 	temperature = 0;
 	rainfall = 0;
 	solarConstant = 0;
+
+	u_coordinate = 0;
+	v_coordinate = 0;
 }
