@@ -2,14 +2,9 @@
 #include <math.h>
 #include <stdlib.h>
 #include "Surface.h"
+#include "PhysicalData.h"
 
 int SurfaceTriangle::_id_counter = 0;
-
-PhysicalData::PhysicalData() {
-	temperature = 0;
-	rainfall = 0;
-	solarConstant = 0;
-}
 
 SurfaceTriangle::SurfaceTriangle() {
 	AllAround = new SurfaceTriangle *[3];
@@ -32,6 +27,7 @@ SurfaceTriangle::SurfaceTriangle() {
 	_intControl1 = SURFACE_CONTROL_CLEAN;
 	_intControl2 = 0;
 	_intControl3 = 0;
+	_intControl4 = 0;
 	_divideImunity = false;
 
 	data = new PhysicalData();
@@ -64,31 +60,6 @@ void SurfaceTriangle::SetAround(int index, SurfaceTriangle * target) {
 	 AllAround[index] = target;
 }
 
-//void SurfaceTriangle::SubdivideThis() {
-//	SurfaceTriangle *tmp;
-//
-//	// we do not want to divide some cells
-//	if(_divideImunity)
-//		return;
-//
-//	tmp = AllAround[2];
-//
-//	AllAround[2] = new SurfaceTriangle();
-//
-//	AllAround[2]->SetAround(0, this);
-//	AllAround[2]->SetAround(1, new SurfaceTriangle());
-//	AllAround[2]->SetAround(2, new SurfaceTriangle());
-//
-//	AllAround[2]->Around(1)->SetAround(0, this->Around(2));
-//	AllAround[2]->Around(1)->SetAround(1, this->Around(1));
-//	AllAround[2]->Around(1)->SetAround(2, tmp);
-//
-//	AllAround[2]->Around(2)->SetAround(0, this->Around(2));
-//	AllAround[2]->Around(2)->SetAround(1, tmp);
-//	AllAround[2]->Around(2)->SetAround(2, this->Around(0));
-//
-//}
-
 void SurfaceTriangle::NullControls() {
 	this->NullControlsInternal(SURFACE_CONTROL_INTERNAL, true);
 	this->NullControlsInternal(SURFACE_CONTROL_CLEAN, true);
@@ -110,6 +81,7 @@ void SurfaceTriangle::NullControlsInternal(const int stage, bool delete_234contr
 		// these do not control null algorithm
 		_intControl2 = 0;
 		_intControl3 = 0;
+		_intControl4 = 0;
 	}
 
 	// flood by stage
@@ -226,17 +198,9 @@ int SurfaceTriangle::GetTagCtrl234(int ctrl_index) {
 	if(ctrl_index <= 1 || ctrl_index > MaxIntCtrl)
 		return -1;
 
-	switch(ctrl_index) {
-	case 2:
-		return _intControl2;
-		break;
-	case 3:
-		return _intControl3;
-		break;
-	default:
-		throw "shouldn't happen in FloodTagCtrl234";
-		return -2;
-	}
+	int * control = this->GetTagCtrl234Pointer(ctrl_index);
+
+	return *control;
 
 }
 
@@ -246,19 +210,7 @@ void SurfaceTriangle::FloodTagCtrl234(int ctrl_index, int tag) {
 	if(ctrl_index <= 1 || ctrl_index > MaxIntCtrl)
 		return;
 
-	int *control = NULL;
-
-	switch(ctrl_index) {
-	case 2:
-		control = &_intControl2;
-		break;
-	case 3:
-		control = &_intControl3;
-		break;
-	default:
-		throw "shouldn't happen in FloodTagCtrl234";
-		return;
-	}
+	int *control = this->GetTagCtrl234Pointer(ctrl_index);
 
 	if(*control == tag)
 		return;
@@ -283,20 +235,8 @@ int SurfaceTriangle::WaveTagCtrl234Internal(int ctrl_index, int tag, bool prvni)
 	if(ctrl_index <= 1 || ctrl_index > MaxIntCtrl)
 		return tag-20;
 
-	int *control = NULL;
+	int *control = this->GetTagCtrl234Pointer(ctrl_index);
 	const long int almost_infinity = ALMOST_INFINITY;
-
-	switch(ctrl_index) {
-	case 2:
-		control = &_intControl2;
-		break;
-	case 3:
-		control = &_intControl3;
-		break;
-	default:
-		throw "shouldn't happen in WaveTagCtrl234";
-		return tag-20;
-	}
 
 	if(prvni) { // first call fills surface by almost infinity
 		this->FloodTagCtrl234(ctrl_index, almost_infinity);
@@ -342,45 +282,22 @@ SurfaceTriangle * SurfaceTriangle::FollowLineTagCtrl234Internal(int ctrl_index, 
 	if(lead_index <= 1 || lead_index > MaxIntCtrl || lead_index == ctrl_index)
 		return NULL;
 
-	int *control = NULL, *lead = NULL;
+	int *control = this->GetTagCtrl234Pointer(ctrl_index),
+			*lead = this->GetTagCtrl234Pointer(lead_index);
 	const long int almost_infinity = ALMOST_INFINITY;
-
-	switch(ctrl_index) {
-	case 2:
-		control = &_intControl2;
-		break;
-	case 3:
-		control = &_intControl3;
-		break;
-	default:
-		throw "shouldn't happen in FollowLineTagCtrl234";
-		return NULL;
-	}
-
-	switch(lead_index) {
-	case 2:
-		lead = &_intControl2;
-		break;
-	case 3:
-		lead = &_intControl3;
-		break;
-	default:
-		throw "shouldn't happen in FollowLineTagCtrl234";
-		return NULL;
-	}
 
 	if(cameFrom == NULL) { // first call fills surface by almost infinity
 		this->FloodTagCtrl234(ctrl_index, almost_infinity);
 		*control = tag;
-		minVal = *lead ;
+		minVal = *lead -1;
 		maxVal = *lead + 1;
-		printf("   zacatek %d %d, %d %d, %d -- %d %d\n", minVal, maxVal, _intControl2, _intControl3, _id, ctrl_index, lead_index);
+		//printf("   zacatek %d %d, %d %d, %d -- %d %d\n", minVal, maxVal, _intControl2, _intControl3, _id, ctrl_index, lead_index);
 	} else {
 		if(*control <= tag || *lead < minVal || *lead > maxVal) {
 			return this;
 		} else {
 			*control = tag;
-			printf("   %d %d, %d %d, %d -- %d %d\n", minVal, maxVal, _intControl2, _intControl3, _id, ctrl_index, lead_index);
+			//printf("   %d %d, %d %d, %d -- %d %d\n", minVal, maxVal, _intControl2, _intControl3, _id, ctrl_index, lead_index);
 		}
 	}
 
@@ -391,7 +308,7 @@ SurfaceTriangle * SurfaceTriangle::FollowLineTagCtrl234Internal(int ctrl_index, 
 
 	// flood subdivide
 	for(int i = 0; i <3; i++) {
-		printf("        soused %d, pan %d: %d %d\n", _id, AllAround[i]->GetID(), AllAround[i]->GetTagCtrl234(lead_index), AllAround[i]->GetTagCtrl234(ctrl_index));
+		//printf("        soused %d, pan %d: %d %d\n", _id, AllAround[i]->GetID(), AllAround[i]->GetTagCtrl234(lead_index), AllAround[i]->GetTagCtrl234(ctrl_index));
 		if(AllAround[i]->GetTagCtrl234(lead_index) >= minVal && AllAround[i]->GetTagCtrl234(lead_index) <= maxVal
 				&& AllAround[i] != cameFrom && AllAround[i]->GetTagCtrl234(ctrl_index) > tag) {
 			point[i] = AllAround[i]->FollowLineTagCtrl234Internal(ctrl_index, lead_index, tag+1, this, minVal, maxVal);
@@ -419,20 +336,8 @@ SurfaceTriangle * SurfaceTriangle::FindFirstTagValue(int ctrl_index, int tag) {
 	if(ctrl_index <= 1 || ctrl_index > MaxIntCtrl)
 		return NULL;
 
-	int *control = NULL;
+	int *control = this->GetTagCtrl234Pointer(ctrl_index);
 	const long int almost_infinity = ALMOST_INFINITY;
-
-	switch(ctrl_index) {
-	case 2:
-		control = &_intControl2;
-		break;
-	case 3:
-		control = &_intControl3;
-		break;
-	default:
-		throw "shouldn't happen in WaveTagCtrl234";
-		return NULL;
-	}
 
 	if(*control == tag)
 		return this;
@@ -465,7 +370,7 @@ void SurfaceTriangle::PrintSurface() {
 
 void SurfaceTriangle::PrintSurfaceInternal() {
 	if(_intControl1 == SURFACE_CONTROL_TAG1) {
-		printf("%d (%d %d), %d\n",_intControl1, _intControl2, _intControl3, _id);
+		printf("%d (%d %d %d), %d\n",_intControl1, _intControl2, _intControl3, _intControl4, _id);
 		printf("  soused - (%d %d), %d\n",AllAround[0]->GetTagCtrl234(2),AllAround[0]->GetTagCtrl234(3), AllAround[0]->GetID());
 		printf("  soused - (%d %d), %d\n",AllAround[1]->GetTagCtrl234(2),AllAround[1]->GetTagCtrl234(3), AllAround[1]->GetID());
 		printf("  soused - (%d %d), %d\n",AllAround[2]->GetTagCtrl234(2),AllAround[2]->GetTagCtrl234(3), AllAround[2]->GetID());
@@ -493,6 +398,122 @@ int SurfaceTriangle::GetMaxTagCtrl234Internal(int ctrl_index) {
 	if(ctrl_index <= 1 || ctrl_index > MaxIntCtrl)
 		return 0;
 
+	int *control = this->GetTagCtrl234Pointer(ctrl_index);
+
+	int a1 = AllAround[0]->GetMaxTagCtrl234Internal(ctrl_index);
+	int a2 = AllAround[1]->GetMaxTagCtrl234Internal(ctrl_index);
+	int a3 =AllAround[2]->GetMaxTagCtrl234Internal(ctrl_index);
+
+	a1 = a1 >= *control ? a1 : *control;
+
+	return a1 > a2 ? (a1 > a3 ? a1 : a3) : (a2 > a3 ? a2 : a3);
+}
+
+void SurfaceTriangle::CreateD20() {
+	// create D20
+	SurfaceTriangle * d01 = this,
+	*d02 = new SurfaceTriangle(),
+	*d03 = new SurfaceTriangle(),
+	*d04 = new SurfaceTriangle(),
+	*d05 = new SurfaceTriangle(),
+	*d06 = new SurfaceTriangle(),
+	*d07 = new SurfaceTriangle(),
+	*d08 = new SurfaceTriangle(),
+	*d09 = new SurfaceTriangle(),
+	*d10 = new SurfaceTriangle(),
+	*d11 = new SurfaceTriangle(),
+	*d12 = new SurfaceTriangle(),
+	*d13 = new SurfaceTriangle(),
+	*d14 = new SurfaceTriangle(),
+	*d15 = new SurfaceTriangle(),
+	*d16 = new SurfaceTriangle(),
+	*d17 = new SurfaceTriangle(),
+	*d18 = new SurfaceTriangle(),
+	*d19 = new SurfaceTriangle(),
+	*d20 = new SurfaceTriangle();
+
+	d01->SetAround(0, d07);
+	d01->SetAround(1, d19);
+	d01->SetAround(2, d13);
+
+	d02->SetAround(0, d18);
+	d02->SetAround(1, d20);
+	d02->SetAround(2, d12);
+
+	d03->SetAround(0, d17);
+	d03->SetAround(1, d16);
+	d03->SetAround(2, d19);
+
+	d04->SetAround(0, d14);
+	d04->SetAround(1, d18);
+	d04->SetAround(2, d11);
+
+	d05->SetAround(0, d15);
+	d05->SetAround(1, d13);
+	d05->SetAround(2, d18);
+
+	d06->SetAround(0, d14);
+	d06->SetAround(1, d09);
+	d06->SetAround(2, d16);
+
+	d07->SetAround(0, d01);
+	d07->SetAround(1, d15);
+	d07->SetAround(2, d17);
+
+	d08->SetAround(0, d16);
+	d08->SetAround(1, d10);
+	d08->SetAround(2, d20);
+
+	d09->SetAround(0, d06);
+	d09->SetAround(1, d11);
+	d09->SetAround(2, d19);
+
+	d10->SetAround(0, d12);
+	d10->SetAround(1, d08);
+	d10->SetAround(2, d17);
+
+	d11->SetAround(0, d13);
+	d11->SetAround(1, d09);
+	d11->SetAround(2, d04);
+
+	d12->SetAround(0, d15);
+	d12->SetAround(1, d02);
+	d12->SetAround(2, d10);
+
+	d13->SetAround(0, d05);
+	d13->SetAround(1, d01);
+	d13->SetAround(2, d11);
+
+	d14->SetAround(0, d06);
+	d14->SetAround(1, d20);
+	d14->SetAround(2, d04);
+
+	d15->SetAround(0, d12);
+	d15->SetAround(1, d07);
+	d15->SetAround(2, d05);
+
+	d16->SetAround(0, d03);
+	d16->SetAround(1, d08);
+	d16->SetAround(2, d06);
+
+	d17->SetAround(0, d10);
+	d17->SetAround(1, d03);
+	d17->SetAround(2, d07);
+
+	d18->SetAround(0, d04);
+	d18->SetAround(1, d02);
+	d18->SetAround(2, d05);
+
+	d19->SetAround(0, d01);
+	d19->SetAround(1, d03);
+	d19->SetAround(2, d09);
+
+	d20->SetAround(0, d02);
+	d20->SetAround(1, d14);
+	d20->SetAround(2, d08);
+}
+
+int* SurfaceTriangle::GetTagCtrl234Pointer(int ctrl_index) {
 	int *control = NULL;
 
 	switch(ctrl_index) {
@@ -502,16 +523,13 @@ int SurfaceTriangle::GetMaxTagCtrl234Internal(int ctrl_index) {
 	case 3:
 		control = &_intControl3;
 		break;
+	case 4:
+		control = &_intControl4;
+		break;
 	default:
-		throw "shouldn't happen in WaveTagCtrl234";
-		return 0;
+		throw "shouldn't happen in GetTagCtrl234Pointer";
+		return NULL;
 	}
 
-	int a1 = AllAround[0]->GetMaxTagCtrl234Internal(ctrl_index);
-	int a2 = AllAround[1]->GetMaxTagCtrl234Internal(ctrl_index);
-	int a3 =AllAround[2]->GetMaxTagCtrl234Internal(ctrl_index);
-
-	a1 = a1 >= *control ? a1 : *control;
-
-	return a1 > a2 ? (a1 > a3 ? a1 : a3) : (a2 > a3 ? a2 : a3);
+	return control;
 }

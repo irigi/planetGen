@@ -8,11 +8,7 @@
 
 #define ALMOST_INFINITY 999999999
 
-class PhysicalData {
-public:
-	PhysicalData();
-	double temperature, rainfall, solarConstant;
-};
+class PhysicalData;
 
 class SurfaceTriangle {
 public:
@@ -40,9 +36,11 @@ public:
 
 	void SetDivideImunity(bool value) { _divideImunity = value; };
 
-	static const int MaxIntCtrl = 3;		// how many int ctrl variables we have (ctrl 1 is reserved)
+	static const int MaxIntCtrl = 4;		// how many int ctrl variables we have (ctrl 1 is reserved)
 
 	int IntControl1(void) {return _intControl1; }
+
+	void CreateD20();
 
 private:
 	void NullControlsInternal(const int stage, bool delete_234controls = false);
@@ -52,32 +50,12 @@ private:
 	SurfaceTriangle * FollowLineTagCtrl234Internal(int ctrl_index, int lead_index, int tag, SurfaceTriangle * cameFrom, int minVal, int maxVal);
 	void PrintSurfaceInternal();
 	int GetMaxTagCtrl234Internal(int ctrl_index);
+	int* GetTagCtrl234Pointer(int ctrl_index);			// returns address of the ctrl variable
 
 	SurfaceTriangle ** AllAround;									// neighbors of the cell
 	SurfaceTriangle ** DivisionField;								// this is used by subdivision algorithm
-	int _intControl1, _intControl2, _intControl3, _id;
+	int _intControl1, _intControl2, _intControl3, _intControl4, _id;
 	bool _divideImunity;												// if (divideImunity), the cell doesn't divide
 
 	static int _id_counter;											// cell counter
-};
-
-class SurfaceSphere : SurfaceTriangle {
-public:
-	void SphericalCoordinates();
-	void CreateSphere();
-	void ExportToBitmap();
-};
-
-class SurfaceToroid : SurfaceTriangle {
-public:
-	void ToroidalCoordinates();
-	void CreateTorus();
-	void ExportToBitmap();
-};
-
-class SurfaceSPK : SurfaceTriangle {
-public:
-	void PolarCoordinates();
-	void CreateSPK();
-	void ExportToBitmap();
 };
