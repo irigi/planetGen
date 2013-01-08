@@ -32,9 +32,15 @@ public:
 	SurfaceTriangle * FindMinSquareValue(int ctrl_index1, int ctrl_index2, int tag1, int tag2); // return some point with given tag value, if not found, return NULL
 	SurfaceTriangle * FindTrulyRandomPoint();
 
+	void WaveDoubleFromTag(int ctrl_index, int tag);
+
 	int GetTagCtrl234(int ctrl_index);							// returns value of the ctrl variable
 	int GetMaxTagCtrl234(int ctrl_index);					// returns max value of the ctrl variable on the surface
 	int GetID() { return _id; }
+	double GetDoubleTag() { return _doubleControl; }
+	void SetDoubleTag(double setto) { _doubleControl = setto; }
+	SurfaceTriangle ** GetAllCellsWithGivenTag(int ctrl_index, int tag);
+	static SurfaceTriangle ** SortAccordingToDoubleControl(SurfaceTriangle ** list);
 
 	void PrintSurface();
 
@@ -51,17 +57,20 @@ private:
 	void NullControlsInternal(const int stage, bool delete_234controls = false);
 	SurfaceTriangle * SubdivideSurfaceInternal(SurfaceTriangle *caller, SurfaceTriangle ** soused1, SurfaceTriangle ** soused2, int tag);
 	void FloodTagCtrl1(int tag);									// floods tag-value from given triangle, stores it in ctrl1
-	int WaveTagCtrl234Internal(int ctrl_index, int tag, bool first = true);
+	void WaveTagCtrl234Internal(int ctrl_index, int tag, bool first = true);
 	SurfaceTriangle * FollowLineTagCtrl234Internal(int ctrl_index, int lead_index, int tag, SurfaceTriangle * cameFrom, int minVal, int maxVal);
 	void PrintSurfaceInternal();
 	int GetMaxTagCtrl234Internal(int ctrl_index);
 	SurfaceTriangle * FindMinSquareValueInternal(int ctrl_index1, int ctrl_index2, int tag1, int tag2);
 	void CreateSphericalCoordinatesInternal(int max2, int max3, int max4);
+	SurfaceTriangle ** GetAllCellsWithGivenTagInternal(int ctrl_index, int tag);
+	void WaveDoubleFromTagInternal(int ctrl_index, int tag);
 	int* GetTagCtrl234Pointer(int ctrl_index);			// returns address of the ctrl variable
 
 	SurfaceTriangle ** AllAround;									// neighbors of the cell
 	SurfaceTriangle ** DivisionField;								// this is used by subdivision algorithm
 	int _intControl1, _intControl2, _intControl3, _intControl4, _id;
+	double _doubleControl;
 	bool _divideImunity;												// if (divideImunity), the cell doesn't divide
 
 	static int _id_counter;											// cell counter

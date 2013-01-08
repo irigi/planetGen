@@ -25,6 +25,7 @@ SurfaceTriangle::SurfaceTriangle() {
 	_intControl2 = 0;
 	_intControl3 = 0;
 	_intControl4 = 0;
+	_doubleControl = 0;
 	_divideImunity = false;
 
 	data = new PhysicalData();
@@ -79,6 +80,7 @@ void SurfaceTriangle::NullControlsInternal(const int stage, bool delete_234contr
 		_intControl2 = 0;
 		_intControl3 = 0;
 		_intControl4 = 0;
+		_doubleControl = 0;
 	}
 
 	// flood by stage
@@ -225,33 +227,32 @@ int SurfaceTriangle::WaveTagCtrl234(int ctrl_index, int tag) {
 	return this->GetMaxTagCtrl234(ctrl_index);
 }
 
-int SurfaceTriangle::WaveTagCtrl234Internal(int ctrl_index, int tag, bool prvni) {
+void SurfaceTriangle::WaveTagCtrl234Internal(int ctrl_index, int tag , bool prvni) {
 	// return maximum tag on the surface
 
 	// illegal index variable
 	if(ctrl_index <= 1 || ctrl_index > MaxIntCtrl)
-		return tag-20;
+		return;
 
 	int *control = this->GetTagCtrl234Pointer(ctrl_index);
-	const long int almost_infinity = ALMOST_INFINITY;
 
 	if(prvni) { // first call fills surface by almost infinity
-		this->FloodTagCtrl234(ctrl_index, almost_infinity);
+		this->FloodTagCtrl234(ctrl_index, ALMOST_INFINITY);
 		*control = tag;
 	} else {
 		if(*control <= tag) {
-			return tag;
+			return;
 		} else {
 			*control = tag;
 		}
 	}
 
 	// flood subdivide
-	int a1 = AllAround[0]->WaveTagCtrl234Internal(ctrl_index, tag+1, false);
-	int a2 = AllAround[1]->WaveTagCtrl234Internal(ctrl_index, tag+1, false);
-	int a3 = AllAround[2]->WaveTagCtrl234Internal(ctrl_index, tag+1, false);
+	AllAround[0]->WaveTagCtrl234Internal(ctrl_index, tag+1, false);
+	AllAround[1]->WaveTagCtrl234Internal(ctrl_index, tag+1, false);
+	AllAround[2]->WaveTagCtrl234Internal(ctrl_index, tag+1, false);
 
-	return a1 > a2 ? (a1 > a3 ? a1 : a3) : (a2 > a3 ? a2 : a3);
+	return;
 }
 
 int SurfaceTriangle::FollowLineTagCtrl234(int ctrl_index, int lead_index, int tag) {
@@ -419,7 +420,7 @@ void SurfaceTriangle::PrintSurface() {
 
 void SurfaceTriangle::PrintSurfaceInternal() {
 	if(_intControl1 == SURFACE_CONTROL_TAG1) {
-		printf("%d (%d %d %d, %.3f %.3f), %d\n",_intControl1, _intControl2, _intControl3, _intControl4,
+		printf("%d (%d %d %d %f, %.3f %.3f), %d\n",_intControl1, _intControl2, _intControl3, _intControl4, _doubleControl,
 				data->u_coordinate*180/M_PI, data->v_coordinate*180/M_PI, _id);
 		printf("  soused - (%d %d %d), %d\n",AllAround[0]->GetTagCtrl234(2),AllAround[0]->GetTagCtrl234(3),AllAround[0]->GetTagCtrl234(4), AllAround[0]->GetID());
 		printf("  soused - (%d %d %d), %d\n",AllAround[1]->GetTagCtrl234(2),AllAround[1]->GetTagCtrl234(3),AllAround[1]->GetTagCtrl234(4), AllAround[1]->GetID());
@@ -615,17 +616,54 @@ void SurfaceTriangle::CreateSphericalCoordinates() {
 
 	this->NullControls();
 	int out1 = this->WaveTagCtrl234(2, 0);
-	SurfaceTriangle * bodRovniku = this->FindFirstTagValue(2, out1/2);
 
-	if(bodRovniku == NULL)
-		return;
+	SurfaceTriangle ** array = NULL
+			;
+	int i = 1;
+	this->WaveDoubleFromTag(2, 0);
+	while((array = this->GetAllCellsWithGivenTag(2,i)) != NULL) {
+		SortAccordingToDoubleControl(array);
 
-	int out2 = bodRovniku->WaveTagCtrl234(3, 0);
-	SurfaceTriangle * bod2Rovniku = this->FindMinSquareValue(2,3, out1/2, out2/2);
-	int out3 = bod2Rovniku->WaveTagCtrl234(4, 0);
+		int j = 0;
+		if(array != NULL) {
+			while(array[j] != NULL) {
+				printf("..%d (%f)",array[j]->GetID(), array[j]->GetDoubleTag());
+				j++;
+			}
+			printf("\n");
+		}
 
-	this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
-	this->CreateSphericalCoordinatesInternal(out1, out2, out3);
+		for(int k = 0; k < j; k++) {
+			array[k]->SetDoubleTag(double(k)/j*M_PI);
+		}
+
+		j = 0;
+		if(array != NULL) {
+			while(array[j] != NULL) {
+				printf("..%d (%f)",array[j]->GetID(), array[j]->GetDoubleTag());
+				j++;
+			}
+			printf("\n");
+		}
+
+		this->WaveDoubleFromTag(2, i);
+
+		delete [] array; array = NULL;
+		i++;
+	}
+
+
+	//SurfaceTriangle * bodRovniku = this->FindFirstTagValue(2, out1/2);
+
+	//if(bodRovniku == NULL)
+	//	return;
+
+	//int out2 = bodRovniku->WaveTagCtrl234(3, 0);
+	//SurfaceTriangle * bod2Rovniku = this->FindMinSquareValue(2,3, out1/2, out2/2);
+	//int out3 = bod2Rovniku->WaveTagCtrl234(4, 0);
+
+	//this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
+	//this->CreateSphericalCoordinatesInternal(out1, out2, out3);
 }
 
 void SurfaceTriangle::CreateSphericalCoordinatesInternal(int max2, int max3, int max4) {
@@ -645,4 +683,196 @@ void SurfaceTriangle::CreateSphericalCoordinatesInternal(int max2, int max3, int
 	AllAround[0]->CreateSphericalCoordinatesInternal(max2, max3, max4);
 	AllAround[1]->CreateSphericalCoordinatesInternal(max2, max3, max4);
 	AllAround[2]->CreateSphericalCoordinatesInternal(max2, max3, max4);
+}
+
+SurfaceTriangle ** SurfaceTriangle::GetAllCellsWithGivenTag(int ctrl_index, int tag) {
+	this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
+	return this->GetAllCellsWithGivenTagInternal(ctrl_index, tag);
+}
+
+SurfaceTriangle ** SurfaceTriangle::GetAllCellsWithGivenTagInternal(int ctrl_index, int tag) {
+	if(_intControl1 != SURFACE_CONTROL_TAG1)
+		return NULL;
+
+	_intControl1 = SURFACE_CONTROL_CLEAN;
+
+	// illegal index variable
+	if(ctrl_index <= 1 || ctrl_index > MaxIntCtrl)
+		return 0;
+
+	int *control = this->GetTagCtrl234Pointer(ctrl_index);
+
+	SurfaceTriangle **  a1 = AllAround[0]->GetAllCellsWithGivenTagInternal(ctrl_index, tag);
+	SurfaceTriangle **  a2 = AllAround[1]->GetAllCellsWithGivenTagInternal(ctrl_index, tag);
+	SurfaceTriangle **  a3 = AllAround[2]->GetAllCellsWithGivenTagInternal(ctrl_index, tag);
+
+	// we have nothing to pass
+	if(a1 == NULL && a2 == NULL && a3 == NULL && this->GetTagCtrl234(ctrl_index) != tag)
+		return NULL;
+
+	// find out how much we have to pass
+	int allocation = 0, i;
+	if(a1 != NULL) {
+			i = 0;
+			while(a1[i] != NULL) {
+				allocation++;
+				i++;
+		}
+	}
+	if(a2 != NULL) {
+			i = 0;
+			while(a2[i] != NULL) {
+				allocation++;
+				i++;
+			}
+	}
+	if(a3 != NULL) {
+			i = 0;
+			while(a3[i] != NULL) {
+				allocation++;
+				i++;
+			}
+	}
+
+	if(tag == this->GetTagCtrl234(ctrl_index))
+		allocation++;
+
+	// +10 is foolproof constant
+	SurfaceTriangle **  ret = new SurfaceTriangle *[allocation+10];
+	for(int i = 0; i < allocation + 10; i++) {
+		ret[i] = NULL;
+	}
+
+	// copy everything we have
+	int n = 0;
+	if(a1 != NULL) {
+			i = 0;
+			while(a1[i] != NULL) {
+				ret[n] = a1[i];
+				i++; n++;
+		}
+	}
+	if(a2 != NULL) {
+			i = 0;
+			while(a2[i] != NULL) {
+				ret[n] = a2[i];
+				i++; n++;
+			}
+	}
+	if(a3 != NULL) {
+			i = 0;
+			while(a3[i] != NULL) {
+				ret[n] = a3[i];
+				i++; n++;
+			}
+	}
+
+	if(tag == this->GetTagCtrl234(ctrl_index)) {
+		ret[n] = this;
+		n++;
+	}
+
+	// delete child arrays
+	if(a1 != NULL) delete [] a1; a1 = NULL;
+	if(a2 != NULL) delete [] a2; a2 = NULL;
+	if(a3 != NULL) delete [] a3; a3 = NULL;
+
+	return ret;
+}
+
+SurfaceTriangle ** SurfaceTriangle::SortAccordingToDoubleControl(SurfaceTriangle ** list) {
+	if(list == NULL)
+		return NULL;
+
+	bool changed = false;
+	while(true) {
+		int i = 1;
+		while(list[i-1] != NULL && list[i] != NULL) {
+			if(list[i-1]->GetDoubleTag() > list[i]->GetDoubleTag()) {
+				SurfaceTriangle * tmp = list[i-1];
+				list[i-1] = list[i];
+				list[i] = tmp;
+				changed = true;
+			}
+
+			i++;
+		}
+
+		if(!changed)
+			return list;
+
+		changed = false;
+	}
+
+	return list;
+}
+
+void SurfaceTriangle::WaveDoubleFromTag(int ctrl_index, int tag) {
+	this->NullControls();
+	this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
+	this->WaveDoubleFromTagInternal(ctrl_index, tag);
+}
+
+void SurfaceTriangle::WaveDoubleFromTagInternal(int ctrl_index, int tag) {
+	if(_intControl1 != SURFACE_CONTROL_TAG1)
+		return;
+
+	_intControl1 = SURFACE_CONTROL_CLEAN;
+
+	if(int(true) != 1) {
+		printf("WaveDoubleFromTagInternal won't work since int(true) != 1\n");
+		throw "WaveDoubleFromTagInternal won't work since int(true) != 1";
+		return;
+	}
+
+	// illegal index variable
+	if(ctrl_index <= 1 || ctrl_index > MaxIntCtrl)
+		return;
+
+	if(tag == 0 && this->GetTagCtrl234(ctrl_index) == tag) {
+		AllAround[0]->SetDoubleTag(-1);
+		AllAround[1]->SetDoubleTag(0);
+		AllAround[2]->SetDoubleTag(1);
+	} else
+	if(this->GetTagCtrl234(ctrl_index) == tag) {
+		// there is only one way to spread -- no problems with orientation
+		if(int(AllAround[0]->GetTagCtrl234(ctrl_index) == tag+1) +
+				int(AllAround[1]->GetTagCtrl234(ctrl_index) == tag+1) +
+				int(AllAround[2]->GetTagCtrl234(ctrl_index) == tag+1) == 1) {
+
+			if(AllAround[0]->GetTagCtrl234(ctrl_index) == tag+1) {
+				AllAround[0]->SetDoubleTag(_doubleControl);
+			}
+			if(AllAround[1]->GetTagCtrl234(ctrl_index) == tag+1) {
+				AllAround[1]->SetDoubleTag(_doubleControl);
+			}
+			if(AllAround[2]->GetTagCtrl234(ctrl_index) == tag+1) {
+				AllAround[2]->SetDoubleTag(_doubleControl);
+			}
+		}
+
+		if(int(AllAround[0]->GetTagCtrl234(ctrl_index) == tag+1) +
+				int(AllAround[1]->GetTagCtrl234(ctrl_index) == tag+1) +
+				int(AllAround[2]->GetTagCtrl234(ctrl_index) == tag+1) == 2) {
+
+			if(AllAround[0]->GetTagCtrl234(ctrl_index) == tag-1) {
+				AllAround[1]->SetDoubleTag(_doubleControl-0.001);
+				AllAround[2]->SetDoubleTag(_doubleControl+0.001);
+			}
+			if(AllAround[1]->GetTagCtrl234(ctrl_index) == tag-1) {
+				AllAround[2]->SetDoubleTag(_doubleControl-0.001);
+				AllAround[0]->SetDoubleTag(_doubleControl+0.001);
+			}
+			if(AllAround[2]->GetTagCtrl234(ctrl_index) == tag-1) {
+				AllAround[0]->SetDoubleTag(_doubleControl-0.001);
+				AllAround[1]->SetDoubleTag(_doubleControl+0.001);
+			}
+		}
+	}
+
+	AllAround[0]->WaveDoubleFromTagInternal(ctrl_index, tag);
+	AllAround[1]->WaveDoubleFromTagInternal(ctrl_index, tag);
+	AllAround[2]->WaveDoubleFromTagInternal(ctrl_index, tag);
+
+	return;
 }

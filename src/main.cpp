@@ -17,10 +17,9 @@ int main(int argc, char* argv[]) {
 
 	dite = level5;
 
-
 	dite->CreateSphericalCoordinates();
 
 	dite->PrintSurface();
 
-	printf("Under von Construction\n");
+	printf("Under von Construction %lu %lu\n", sizeof(long double), sizeof(double));
 }
