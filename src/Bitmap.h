@@ -10,4 +10,5 @@ public:
 
 	int control1;
 	double controlDouble;
+	double u_coordinate, v_coordinate;
 };

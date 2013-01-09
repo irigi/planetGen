@@ -563,17 +563,17 @@ void SurfaceTriangle::CreateSphericalCoordinates() {
 
 	int i = 1;
 	this->WaveDoubleFromTag(2, 0);
-	array = this->GetAllCellsWithGivenTag(2,0);
-	while((array = this->GetAllNeighborsWithGivenTag(2,i,array)) != NULL) {
+	array = this->GetAllCellsWithGivenTag(2,1);
+	while(array != NULL) {
 		SortAccordingToDoubleControl(array);
 
 		int j = 0;
 		if(array != NULL) {
 			while(array[j] != NULL) {
-		//		printf("..%d (%f)",array[j]->GetID(), array[j]->GetDoubleTag());
+				//printf("..%d (%f)",array[j]->GetID(), array[j]->GetDoubleTag());
 				j++;
 			}
-		//	printf("\n");
+			//printf("\n");
 		}
 
 		for(int k = 0; k < j; k++) {
@@ -591,7 +591,17 @@ void SurfaceTriangle::CreateSphericalCoordinates() {
 
 		this->WaveDoubleFromTag(2, i);
 
-		delete [] array; array = NULL;
+		// delete old array and create new one
+		SurfaceTriangle ** tmp = array;
+		array = this->GetAllNeighborsWithGivenTag(2,i+1,array);
+		delete [] tmp; tmp = NULL;
+
+		if(array[0] == NULL) {
+			//printf("deleting empty array\n");
+			delete [] array;
+			array = NULL;
+		}
+
 		i++;
 	}
 
@@ -618,14 +628,25 @@ SurfaceTriangle ** SurfaceTriangle::GetAllNeighborsWithGivenTag(int ctrl_index, 
 	if(array == NULL)
 		return NULL;
 
+	if(ctrl_index == 4) {
+		printf("Cannot use index 4 in GetAllNeighborsWithGivenTag, it is used internaly\n");
+		return NULL;
+	}
+
 	int i = 0, cells_to_return = 0;
 	while(array[i] != NULL) {
-		if(array[i]->AllAround[0]->GetTagCtrl234(ctrl_index) == tag)
+		if(array[i]->AllAround[0]->GetTagCtrl234(ctrl_index) == tag) {
 			cells_to_return++;
-		if(array[i]->AllAround[1]->GetTagCtrl234(ctrl_index) == tag)
-					cells_to_return++;
-		if(array[i]->AllAround[2]->GetTagCtrl234(ctrl_index) == tag)
-					cells_to_return++;
+			*(array[i]->AllAround[0]->GetTagCtrl234Pointer(4)) = 1; // this causes each element is only once in the result array
+		}
+		if(array[i]->AllAround[1]->GetTagCtrl234(ctrl_index) == tag) {
+			cells_to_return++;
+			*(array[i]->AllAround[1]->GetTagCtrl234Pointer(4)) = 1;
+		}
+		if(array[i]->AllAround[2]->GetTagCtrl234(ctrl_index) == tag) {
+			*(array[i]->AllAround[2]->GetTagCtrl234Pointer(4)) = 1;
+			cells_to_return++;
+		}
 		i++;
 	}
 
@@ -636,19 +657,25 @@ SurfaceTriangle ** SurfaceTriangle::GetAllNeighborsWithGivenTag(int ctrl_index, 
 	i = 0;
 	int n = 0;
 	while(array[i] != NULL) {
-		if(array[i]->AllAround[0]->GetTagCtrl234(ctrl_index) == tag) {
+		if(array[i]->AllAround[0]->GetTagCtrl234(ctrl_index) == tag &&
+				array[i]->AllAround[0]->GetTagCtrl234(4) == 1) {
 			ret[n] = array[i]->AllAround[0];
 			n++;
+			*(array[i]->AllAround[0]->GetTagCtrl234Pointer(4)) = 0;
 		}
 
-		if(array[i]->AllAround[1]->GetTagCtrl234(ctrl_index) == tag) {
+		if(array[i]->AllAround[1]->GetTagCtrl234(ctrl_index) == tag &&
+				array[i]->AllAround[1]->GetTagCtrl234(4) == 1) {
 			ret[n] = array[i]->AllAround[1];
 			n++;
+			*(array[i]->AllAround[1]->GetTagCtrl234Pointer(4)) = 0;
 		}
 
-		if(array[i]->AllAround[2]->GetTagCtrl234(ctrl_index) == tag) {
+		if(array[i]->AllAround[2]->GetTagCtrl234(ctrl_index) == tag &&
+				array[i]->AllAround[2]->GetTagCtrl234(4) == 1) {
 			ret[n] = array[i]->AllAround[2];
 			n++;
+			*(array[i]->AllAround[2]->GetTagCtrl234Pointer(4)) = 0;
 		}
 
 		i++;
@@ -754,7 +781,7 @@ SurfaceTriangle ** SurfaceTriangle::GetAllCellsWithGivenTagInternal(int ctrl_ind
 }
 
 SurfaceTriangle ** SurfaceTriangle::SortAccordingToDoubleControl(SurfaceTriangle ** list) {
-	if(list == NULL)
+	if(list == NULL || list[0] == NULL)
 		return NULL;
 
 	bool changed = false;

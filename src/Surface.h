@@ -9,7 +9,7 @@
 #define ALMOST_INFINITY 999999999
 
 #define DEBUG_WAVE false
-#define DEBUG_NULL true
+#define DEBUG_NULL false
 
 class PhysicalData;
 
