@@ -9,6 +9,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 ## to provide a way for the user to supply additional arguments.
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
 
+CXXFLAGS = -g -O2 -Wall
+
 ## Define an executable target "hello", which will be installed into the
 ## directory named by the predefined variable $(bindir).
 bin_PROGRAMS = planetGen

@@ -57,7 +57,7 @@ private:
 	void NullControlsInternal(const int stage, bool delete_234controls = false);
 	SurfaceTriangle * SubdivideSurfaceInternal(SurfaceTriangle *caller, SurfaceTriangle ** soused1, SurfaceTriangle ** soused2, int tag);
 	void FloodTagCtrl1(int tag);									// floods tag-value from given triangle, stores it in ctrl1
-	void WaveTagCtrl234Internal(int ctrl_index, int tag, bool first = true);
+	void WaveTagCtrl234Internal(int ctrl_index, int tag, int max, bool first = true);
 	SurfaceTriangle * FollowLineTagCtrl234Internal(int ctrl_index, int lead_index, int tag, SurfaceTriangle * cameFrom, int minVal, int maxVal);
 	void PrintSurfaceInternal();
 	int GetMaxTagCtrl234Internal(int ctrl_index);

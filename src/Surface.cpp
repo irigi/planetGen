@@ -223,11 +223,18 @@ void SurfaceTriangle::FloodTagCtrl234(int ctrl_index, int tag) {
 }
 
 int SurfaceTriangle::WaveTagCtrl234(int ctrl_index, int tag) {
-	this->WaveTagCtrl234Internal(ctrl_index, tag);
-	return this->GetMaxTagCtrl234(ctrl_index);
+	int ret = 0, max = 100;
+
+	// this prevents almost infinite diving into the recursion while preserving the generality
+	this->WaveTagCtrl234Internal(ctrl_index, tag, max);
+	while((ret=this->GetMaxTagCtrl234(ctrl_index)) == ALMOST_INFINITY) {
+		max *= 2;
+		this->WaveTagCtrl234Internal(ctrl_index, tag, max);
+	}
+	return ret;
 }
 
-void SurfaceTriangle::WaveTagCtrl234Internal(int ctrl_index, int tag , bool prvni) {
+void SurfaceTriangle::WaveTagCtrl234Internal(int ctrl_index, int tag, int max, bool prvni) {
 	// return maximum tag on the surface
 
 	// illegal index variable
@@ -236,11 +243,14 @@ void SurfaceTriangle::WaveTagCtrl234Internal(int ctrl_index, int tag , bool prvn
 
 	int *control = this->GetTagCtrl234Pointer(ctrl_index);
 
+	if(control == NULL)
+		return;
+
 	if(prvni) { // first call fills surface by almost infinity
 		this->FloodTagCtrl234(ctrl_index, ALMOST_INFINITY);
 		*control = tag;
 	} else {
-		if(*control <= tag) {
+		if(*control <= tag || tag >= max) {
 			return;
 		} else {
 			*control = tag;
@@ -248,9 +258,9 @@ void SurfaceTriangle::WaveTagCtrl234Internal(int ctrl_index, int tag , bool prvn
 	}
 
 	// flood subdivide
-	AllAround[0]->WaveTagCtrl234Internal(ctrl_index, tag+1, false);
-	AllAround[1]->WaveTagCtrl234Internal(ctrl_index, tag+1, false);
-	AllAround[2]->WaveTagCtrl234Internal(ctrl_index, tag+1, false);
+	AllAround[0]->WaveTagCtrl234Internal(ctrl_index, tag+1, max, false);
+	AllAround[1]->WaveTagCtrl234Internal(ctrl_index, tag+1, max, false);
+	AllAround[2]->WaveTagCtrl234Internal(ctrl_index, tag+1, max, false);
 
 	return;
 }
@@ -335,7 +345,6 @@ SurfaceTriangle * SurfaceTriangle::FindFirstTagValue(int ctrl_index, int tag) {
 		return NULL;
 
 	int *control = this->GetTagCtrl234Pointer(ctrl_index);
-	const long int almost_infinity = ALMOST_INFINITY;
 
 	if(*control == tag)
 		return this;
@@ -362,7 +371,7 @@ SurfaceTriangle * SurfaceTriangle::FindFirstTagValue(int ctrl_index, int tag) {
 
 SurfaceTriangle * SurfaceTriangle::FindMinSquareValue(int ctrl_index1, int ctrl_index2, int tag1, int tag2) {
 	this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
-	this->FindMinSquareValueInternal(ctrl_index1, ctrl_index2, tag1, tag2);
+	return this->FindMinSquareValueInternal(ctrl_index1, ctrl_index2, tag1, tag2);
 }
 
 SurfaceTriangle * SurfaceTriangle::FindMinSquareValueInternal(int ctrl_index1, int ctrl_index2, int tag1, int tag2) {
@@ -436,7 +445,7 @@ void SurfaceTriangle::PrintSurfaceInternal() {
 
 int SurfaceTriangle::GetMaxTagCtrl234(int ctrl_index) {
 	this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
-	this->GetMaxTagCtrl234Internal(ctrl_index);
+	return this->GetMaxTagCtrl234Internal(ctrl_index);
 }
 
 int SurfaceTriangle::GetMaxTagCtrl234Internal(int ctrl_index) {
@@ -617,8 +626,8 @@ void SurfaceTriangle::CreateSphericalCoordinates() {
 	this->NullControls();
 	int out1 = this->WaveTagCtrl234(2, 0);
 
-	SurfaceTriangle ** array = NULL
-			;
+	SurfaceTriangle ** array = NULL;
+
 	int i = 1;
 	this->WaveDoubleFromTag(2, 0);
 	while((array = this->GetAllCellsWithGivenTag(2,i)) != NULL) {
@@ -685,8 +694,6 @@ SurfaceTriangle ** SurfaceTriangle::GetAllCellsWithGivenTagInternal(int ctrl_ind
 	// illegal index variable
 	if(ctrl_index <= 1 || ctrl_index > MaxIntCtrl)
 		return 0;
-
-	int *control = this->GetTagCtrl234Pointer(ctrl_index);
 
 	SurfaceTriangle **  a1 = AllAround[0]->GetAllCellsWithGivenTagInternal(ctrl_index, tag);
 	SurfaceTriangle **  a2 = AllAround[1]->GetAllCellsWithGivenTagInternal(ctrl_index, tag);
