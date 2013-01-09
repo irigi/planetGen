@@ -8,4 +8,6 @@
 
 BitmapPixel::BitmapPixel() {
 	this->data = new PhysicalData();
+	control1 = 0;
+	controlDouble = 0;
 }

@@ -16,10 +16,10 @@ int main(int argc, char* argv[]) {
 	level5 = level4->SubdivideSurface();
 	level6 = level5->SubdivideSurface();
 	level7 = level6->SubdivideSurface();
-	level8 = level7->SubdivideSurface();
+	//level8 = level7->SubdivideSurface();
 	//level9 = level8->SubdivideSurface();
 
-	dite = level8;
+	dite = level7;
 
 	dite->CreateSphericalCoordinates();
 

@@ -7,4 +7,7 @@ class BitmapPixel {
 public:
 	BitmapPixel();
 	PhysicalData * data;
+
+	int control1;
+	double controlDouble;
 };

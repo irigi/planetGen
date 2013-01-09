@@ -8,6 +8,9 @@
 
 #define ALMOST_INFINITY 999999999
 
+#define DEBUG_WAVE false
+#define DEBUG_NULL true
+
 class PhysicalData;
 
 class SurfaceTriangle {
@@ -18,6 +21,8 @@ public:
 	SurfaceTriangle * Around(int index);
 	PhysicalData * data;
 
+	static const int MaxIntCtrl = 4;		// how many int ctrl variables we have (ctrl 1 is reserved)
+
 	void SetAround(int index, SurfaceTriangle * target);
 	void SetDivideImunity(bool value) { _divideImunity = value; };
 
@@ -26,7 +31,6 @@ public:
 
 	void FloodTagCtrl234(int ctrl_index, int tag);    	// floods tag value into ctrl of given index
 	int WaveTagCtrl234(int ctrl_index, int tag);		 	// floods tag value into ctrl of given index, it increases the value as it goes
-	int FollowLineTagCtrl234(int ctrl_index, int lead_index, int tag);	// increases the ctrl variable of given index along to line
 
 	SurfaceTriangle * FindFirstTagValue(int ctrl_index, int tag); // return some point with given tag value, if not found, return NULL
 	SurfaceTriangle * FindMinSquareValue(int ctrl_index1, int ctrl_index2, int tag1, int tag2); // return some point with given tag value, if not found, return NULL
@@ -44,8 +48,6 @@ public:
 
 	void PrintSurface();
 
-	static const int MaxIntCtrl = 4;		// how many int ctrl variables we have (ctrl 1 is reserved)
-
 	int IntControl1(void) {return _intControl1; }
 
 	void CreateD20();
@@ -53,12 +55,13 @@ public:
 
 	void CreateSphericalCoordinates();
 
+	void ExportBitmap();
+
 private:
 	void NullControlsInternal(const int stage, bool delete_234controls = false);
 	SurfaceTriangle * SubdivideSurfaceInternal(SurfaceTriangle *caller, SurfaceTriangle ** soused1, SurfaceTriangle ** soused2, int tag);
 	void FloodTagCtrl1(int tag);									// floods tag-value from given triangle, stores it in ctrl1
 	void WaveTagCtrl234Internal(int ctrl_index, int tag, int max, bool first = true);
-	SurfaceTriangle * FollowLineTagCtrl234Internal(int ctrl_index, int lead_index, int tag, SurfaceTriangle * cameFrom, int minVal, int maxVal);
 	void PrintSurfaceInternal();
 	int GetMaxTagCtrl234Internal(int ctrl_index);
 	SurfaceTriangle * FindMinSquareValueInternal(int ctrl_index1, int ctrl_index2, int tag1, int tag2);
@@ -73,5 +76,6 @@ private:
 	double _doubleControl;
 	bool _divideImunity;												// if (divideImunity), the cell doesn't divide
 
-	static int _id_counter;											// cell counter
+	static long int _id_counter;											// cell counter
+	static long int _debug;
 };

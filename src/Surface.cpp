@@ -4,7 +4,8 @@
 #include "Surface.h"
 #include "PhysicalData.h"
 
-int SurfaceTriangle::_id_counter = 0;
+long SurfaceTriangle::_id_counter = 0;
+long SurfaceTriangle::_debug = 0;
 
 SurfaceTriangle::SurfaceTriangle() {
 	AllAround = new SurfaceTriangle *[3];
@@ -59,8 +60,10 @@ void SurfaceTriangle::SetAround(int index, SurfaceTriangle * target) {
 }
 
 void SurfaceTriangle::NullControls() {
+	if(DEBUG_NULL) _debug = 0;
 	this->NullControlsInternal(SURFACE_CONTROL_INTERNAL, true);
 	this->NullControlsInternal(SURFACE_CONTROL_CLEAN, true);
+	if(DEBUG_NULL) printf("NullControls: recursion called %ld\n", _debug);
 }
 
 void SurfaceTriangle::FloodTagCtrl1(int tag) {
@@ -73,6 +76,7 @@ void SurfaceTriangle::FloodTagCtrl1(int tag) {
 }
 
 void SurfaceTriangle::NullControlsInternal(const int stage, bool delete_234controls) {
+	if(DEBUG_NULL) _debug++;
 	_intControl1 = stage;
 
 	if(delete_234controls) {
@@ -224,6 +228,7 @@ void SurfaceTriangle::FloodTagCtrl234(int ctrl_index, int tag) {
 
 int SurfaceTriangle::WaveTagCtrl234(int ctrl_index, int tag) {
 	int ret = 0, max = 100;
+	if(DEBUG_WAVE) _debug = 0;
 
 	// this prevents almost infinite diving into the recursion while preserving the generality
 	this->WaveTagCtrl234Internal(ctrl_index, tag, max);
@@ -231,11 +236,13 @@ int SurfaceTriangle::WaveTagCtrl234(int ctrl_index, int tag) {
 		max *= 2;
 		this->WaveTagCtrl234Internal(ctrl_index, tag, max);
 	}
+	if(DEBUG_WAVE) printf("WaveTagCtrl234: recursion calls %ld\n", _debug);
 	return ret;
 }
 
 void SurfaceTriangle::WaveTagCtrl234Internal(int ctrl_index, int tag, int max, bool prvni) {
 	// return maximum tag on the surface
+	if(DEBUG_WAVE) _debug++;
 
 	// illegal index variable
 	if(ctrl_index <= 1 || ctrl_index > MaxIntCtrl)
@@ -265,79 +272,6 @@ void SurfaceTriangle::WaveTagCtrl234Internal(int ctrl_index, int tag, int max, b
 	return;
 }
 
-int SurfaceTriangle::FollowLineTagCtrl234(int ctrl_index, int lead_index, int tag) {
-	// return maximum tag on the line on the surface
-	SurfaceTriangle * ret = FollowLineTagCtrl234Internal(ctrl_index, lead_index, tag, NULL, 0, 0);
-
-	if(ret == NULL) {
-		// this happens when error occurs
-		printf("got null, vsechno zpet\n");
-		this->NullControls();
-		return 0;
-	} else
-		return ret->GetTagCtrl234(ctrl_index);
-}
-
-SurfaceTriangle * SurfaceTriangle::FollowLineTagCtrl234Internal(int ctrl_index, int lead_index, int tag, SurfaceTriangle * cameFrom, int minVal, int maxVal) {
-	// Assumes there is an array in ctrl_leadindex that emerged from some wave algorithm.
-	// It must well define "lines" on the surface, i.e. each triangle with ctrl_leadindex value  minVal must
-	// have 2 neighboring triangles with value maxVal and vice versa. If this doesn't hold, the algorithm returns NULL.
-
-	// illegal index variable
-	if(ctrl_index <= 1 || ctrl_index > MaxIntCtrl)
-		return NULL;
-
-	if(lead_index <= 1 || lead_index > MaxIntCtrl || lead_index == ctrl_index)
-		return NULL;
-
-	int *control = this->GetTagCtrl234Pointer(ctrl_index),
-			*lead = this->GetTagCtrl234Pointer(lead_index);
-	const long int almost_infinity = ALMOST_INFINITY;
-
-	if(cameFrom == NULL) { // first call fills surface by almost infinity
-		this->FloodTagCtrl234(ctrl_index, almost_infinity);
-		*control = tag;
-		minVal = *lead -1;
-		maxVal = *lead + 1;
-		//printf("   zacatek %d %d, %d %d, %d -- %d %d\n", minVal, maxVal, _intControl2, _intControl3, _id, ctrl_index, lead_index);
-	} else {
-		if(*control <= tag || *lead < minVal || *lead > maxVal) {
-			return this;
-		} else {
-			*control = tag;
-			//printf("   %d %d, %d %d, %d -- %d %d\n", minVal, maxVal, _intControl2, _intControl3, _id, ctrl_index, lead_index);
-		}
-	}
-
-	SurfaceTriangle ** point = new SurfaceTriangle *[3];
-	SurfaceTriangle * ret = NULL;
-
-	point[0] = this; point[1] = this; point[2] =this;
-
-	// flood subdivide
-	for(int i = 0; i <3; i++) {
-		//printf("        soused %d, pan %d: %d %d\n", _id, AllAround[i]->GetID(), AllAround[i]->GetTagCtrl234(lead_index), AllAround[i]->GetTagCtrl234(ctrl_index));
-		if(AllAround[i]->GetTagCtrl234(lead_index) >= minVal && AllAround[i]->GetTagCtrl234(lead_index) <= maxVal
-				&& AllAround[i] != cameFrom && AllAround[i]->GetTagCtrl234(ctrl_index) > tag) {
-			point[i] = AllAround[i]->FollowLineTagCtrl234Internal(ctrl_index, lead_index, tag+1, this, minVal, maxVal);
-			break; // only one way around...
-		}
-	}
-
-	if(point[0] == NULL || point[1] == NULL || point[2] == NULL)
-		return NULL;
-
-	ret = point[0];
-	if(point[1]->GetTagCtrl234(ctrl_index) > ret->GetTagCtrl234(ctrl_index))
-		ret = point[1];
-	if(point[2]->GetTagCtrl234(ctrl_index) > ret->GetTagCtrl234(ctrl_index))
-		ret = point[2];
-
-	delete [] point;
-
-	return ret;
-
-}
 
 SurfaceTriangle * SurfaceTriangle::FindFirstTagValue(int ctrl_index, int tag) {
 	// illegal index variable
@@ -695,9 +629,11 @@ SurfaceTriangle ** SurfaceTriangle::GetAllCellsWithGivenTagInternal(int ctrl_ind
 	if(ctrl_index <= 1 || ctrl_index > MaxIntCtrl)
 		return 0;
 
-	SurfaceTriangle **  a1 = AllAround[0]->GetAllCellsWithGivenTagInternal(ctrl_index, tag);
-	SurfaceTriangle **  a2 = AllAround[1]->GetAllCellsWithGivenTagInternal(ctrl_index, tag);
-	SurfaceTriangle **  a3 = AllAround[2]->GetAllCellsWithGivenTagInternal(ctrl_index, tag);
+	SurfaceTriangle **  a1 = NULL, **a2 = NULL, **a3 = NULL;
+
+	a1 = AllAround[0]->GetAllCellsWithGivenTagInternal(ctrl_index, tag);
+	a2 = AllAround[1]->GetAllCellsWithGivenTagInternal(ctrl_index, tag);
+	a3 = AllAround[2]->GetAllCellsWithGivenTagInternal(ctrl_index, tag);
 
 	// we have nothing to pass
 	if(a1 == NULL && a2 == NULL && a3 == NULL && this->GetTagCtrl234(ctrl_index) != tag)
@@ -868,4 +804,8 @@ void SurfaceTriangle::WaveDoubleFromTagInternal(int ctrl_index, int tag) {
 	AllAround[2]->WaveDoubleFromTagInternal(ctrl_index, tag);
 
 	return;
+}
+
+void SurfaceTriangle::ExportBitmap() {
+
 }
