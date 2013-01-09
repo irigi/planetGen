@@ -627,24 +627,24 @@ void SurfaceTriangle::CreateSphericalCoordinates() {
 		int j = 0;
 		if(array != NULL) {
 			while(array[j] != NULL) {
-				printf("..%d (%f)",array[j]->GetID(), array[j]->GetDoubleTag());
+		//		printf("..%d (%f)",array[j]->GetID(), array[j]->GetDoubleTag());
 				j++;
 			}
-			printf("\n");
+		//	printf("\n");
 		}
 
 		for(int k = 0; k < j; k++) {
-			array[k]->SetDoubleTag(double(k)/j*M_PI);
+			array[k]->SetDoubleTag(double(k)/j*M_PI*2);
 		}
 
-		j = 0;
-		if(array != NULL) {
-			while(array[j] != NULL) {
-				printf("..%d (%f)",array[j]->GetID(), array[j]->GetDoubleTag());
-				j++;
-			}
-			printf("\n");
-		}
+		//j = 0;
+		//if(array != NULL) {
+		//	while(array[j] != NULL) {
+		//		printf("..%d (%f)",array[j]->GetID(), array[j]->GetDoubleTag());
+		//		j++;
+		//	}
+		//	printf("\n");
+		//}
 
 		this->WaveDoubleFromTag(2, i);
 
@@ -652,21 +652,11 @@ void SurfaceTriangle::CreateSphericalCoordinates() {
 		i++;
 	}
 
-
-	//SurfaceTriangle * bodRovniku = this->FindFirstTagValue(2, out1/2);
-
-	//if(bodRovniku == NULL)
-	//	return;
-
-	//int out2 = bodRovniku->WaveTagCtrl234(3, 0);
-	//SurfaceTriangle * bod2Rovniku = this->FindMinSquareValue(2,3, out1/2, out2/2);
-	//int out3 = bod2Rovniku->WaveTagCtrl234(4, 0);
-
-	//this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
-	//this->CreateSphericalCoordinatesInternal(out1, out2, out3);
+	this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
+	this->CreateSphericalCoordinatesInternal(out1);
 }
 
-void SurfaceTriangle::CreateSphericalCoordinatesInternal(int max2, int max3, int max4) {
+void SurfaceTriangle::CreateSphericalCoordinatesInternal(int max2) {
 	if(_intControl1 != SURFACE_CONTROL_TAG1)
 		return;
 
@@ -674,15 +664,11 @@ void SurfaceTriangle::CreateSphericalCoordinatesInternal(int max2, int max3, int
 
 	this->data->u_coordinate = (_intControl2 - max2/2.0)/max2 * M_PI;
 
-	double
-		x = sin((_intControl3 - max3/2.0)/max3 * M_PI),
-		y = sin((_intControl4 - max4/2.0)/max4 * M_PI);
+	this->data->v_coordinate = _doubleControl;
 
-	this->data->v_coordinate = atan2(x, y);
-
-	AllAround[0]->CreateSphericalCoordinatesInternal(max2, max3, max4);
-	AllAround[1]->CreateSphericalCoordinatesInternal(max2, max3, max4);
-	AllAround[2]->CreateSphericalCoordinatesInternal(max2, max3, max4);
+	AllAround[0]->CreateSphericalCoordinatesInternal(max2);
+	AllAround[1]->CreateSphericalCoordinatesInternal(max2);
+	AllAround[2]->CreateSphericalCoordinatesInternal(max2);
 }
 
 SurfaceTriangle ** SurfaceTriangle::GetAllCellsWithGivenTag(int ctrl_index, int tag) {

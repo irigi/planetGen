@@ -62,7 +62,7 @@ private:
 	void PrintSurfaceInternal();
 	int GetMaxTagCtrl234Internal(int ctrl_index);
 	SurfaceTriangle * FindMinSquareValueInternal(int ctrl_index1, int ctrl_index2, int tag1, int tag2);
-	void CreateSphericalCoordinatesInternal(int max2, int max3, int max4);
+	void CreateSphericalCoordinatesInternal(int max2);
 	SurfaceTriangle ** GetAllCellsWithGivenTagInternal(int ctrl_index, int tag);
 	void WaveDoubleFromTagInternal(int ctrl_index, int tag);
 	int* GetTagCtrl234Pointer(int ctrl_index);			// returns address of the ctrl variable
