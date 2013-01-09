@@ -13,3 +13,12 @@ PhysicalData::PhysicalData() {
 	u_coordinate = 0;
 	v_coordinate = 0;
 }
+
+PhysicalData::PhysicalData(PhysicalData * data) {
+	temperature = data->temperature;
+	rainfall = data->rainfall;
+	solarConstant = data->solarConstant;
+
+	u_coordinate = data->u_coordinate;
+	v_coordinate = data->v_coordinate;
+}

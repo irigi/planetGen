@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include "Surface.h"
 #include "PhysicalData.h"
+#include "Bitmap.h"
+#include "UserSettings.h"
 
 long SurfaceTriangle::_id_counter = 0;
 long SurfaceTriangle::_debug = 0;
@@ -877,6 +879,55 @@ void SurfaceTriangle::WaveDoubleFromTagInternal(int ctrl_index, int tag) {
 	return;
 }
 
-void SurfaceTriangle::ExportBitmap() {
+Bitmap * SurfaceTriangle::ExportBitmap(int x_size, int y_size) {
+	if(x_size <= 0 || y_size <= 0)
+		return NULL;
+
+	Bitmap * bitmap = new Bitmap();
+	bitmap->bitmap = new BitmapPixel **[x_size];
+
+	for(int i = 0; i < x_size; i++) {
+		bitmap->bitmap[i] = new BitmapPixel *[y_size];
+
+		for(int j = 0; j < y_size; j++) {
+			bitmap->bitmap[i][j] = new BitmapPixel();
+
+			bitmap->bitmap[i][j]->u_coordinate = bitmap->ToCoordsU(i,j);
+			bitmap->bitmap[i][j]->v_coordinate = bitmap->ToCoordsV(i,j);
+		}
+	}
+
+	return bitmap;
 
 }
+
+Bitmap * SurfaceTriangle::ExportSurfaceToBitmap(Bitmap * bitmap) {
+	this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
+}
+
+void SurfaceTriangle::ExportSurfaceToBitmapInternal(Bitmap * bitmap) {
+	if(_intControl1 != SURFACE_CONTROL_TAG1)
+		return;
+
+	_intControl1 = SURFACE_CONTROL_CLEAN;
+
+	AllAround[0]->ExportSurfaceToBitmapInternal(bitmap);
+	AllAround[1]->ExportSurfaceToBitmapInternal(bitmap);
+	AllAround[2]->ExportSurfaceToBitmapInternal(bitmap);
+
+	int i, j;
+	i = bitmap->FromCoordsI(this->data->u_coordinate, this->data->v_coordinate);
+	j = bitmap->FromCoordsJ(this->data->u_coordinate, this->data->v_coordinate);
+
+	if(i < 0 || i >= bitmap->x_size || j < 0 || j >= bitmap->y_size)
+		return;
+
+	if(bitmap->bitmap[i][j]->control1 == 0) {
+		// we note that to this pixel, data from surface were written
+		bitmap->bitmap[i][j]->control1 = 1;
+		delete bitmap->bitmap[i][j]->data;
+		bitmap->bitmap[i][j]->data = new PhysicalData(this->data);
+	}
+
+}
+

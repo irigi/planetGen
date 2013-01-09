@@ -25,5 +25,5 @@ int main(int argc, char* argv[]) {
 
 	//dite->PrintSurface();
 
-	printf("Under von Construction %lu %lu\n", sizeof(long), sizeof(int));
+	printf("Under von Construction %d %d %d\n", int(round(0.499)), int(round(0.500)), int(round(0.501)));
 }

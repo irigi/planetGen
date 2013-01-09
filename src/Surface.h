@@ -12,6 +12,8 @@
 #define DEBUG_NULL false
 
 class PhysicalData;
+class Bitmap;
+class BitmapPixel;
 
 class SurfaceTriangle {
 public:
@@ -56,7 +58,9 @@ public:
 
 	void CreateSphericalCoordinates();
 
-	void ExportBitmap();
+	static Bitmap * ExportBitmap(int x_size, int y_size);
+
+	Bitmap * ExportSurfaceToBitmap(Bitmap * bitmap);
 
 private:
 	void NullControlsInternal(const int stage, bool delete_234controls = false);
@@ -69,6 +73,7 @@ private:
 	void CreateSphericalCoordinatesInternal(int max2);
 	SurfaceTriangle ** GetAllCellsWithGivenTagInternal(int ctrl_index, int tag);
 	void WaveDoubleFromTagInternal(int ctrl_index, int tag);
+	void ExportSurfaceToBitmapInternal(Bitmap * bitmap);
 	int* GetTagCtrl234Pointer(int ctrl_index);			// returns address of the ctrl variable
 
 	SurfaceTriangle ** AllAround;									// neighbors of the cell
