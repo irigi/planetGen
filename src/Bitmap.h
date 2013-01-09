@@ -15,7 +15,7 @@ public:
 
 class Bitmap {
 public:
-	Bitmap();
+	Bitmap(int x_size, int y_size);
 	BitmapPixel *** bitmap;
 	int x_size, y_size;
 
@@ -23,4 +23,9 @@ public:
 	int FromCoordsJ(double u, double v, int alternative = -1);
 	double ToCoordsU(int i, int j, int alternative = -1);
 	double ToCoordsV(int i, int j, int alternative = -1);
+
+	void WaveDefinedPixelsSpherical(); // floods pixels from projected surface into empty ones using curved metric of the coordinate grid
+
+private:
+	void WaveDefinedPixelsSphericalInternal();
 };

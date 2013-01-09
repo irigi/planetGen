@@ -15,10 +15,28 @@ BitmapPixel::BitmapPixel() {
 	v_coordinate = 0;
 }
 
-Bitmap::Bitmap() {
-	x_size = 0;
-	y_size = 0;
-	bitmap = NULL;
+Bitmap::Bitmap(int x, int y) {
+	x_size = x;
+	y_size = y;
+
+	if(x_size <= 0 || y_size <= 0) {
+		bitmap = NULL;
+		x_size = 0;
+		y_size = 0;
+	} else {
+		bitmap = new BitmapPixel **[x_size];
+
+		for(int i = 0; i < x_size; i++) {
+			bitmap[i] = new BitmapPixel *[y_size];
+
+			for(int j = 0; j < y_size; j++) {
+				bitmap[i][j] = new BitmapPixel();
+
+				bitmap[i][j]->u_coordinate = ToCoordsU(i,j);
+				bitmap[i][j]->v_coordinate = ToCoordsV(i,j);
+			}
+		}
+	}
 }
 
 int Bitmap::FromCoordsI(double u, double v, int alternative) {

@@ -1,2 +1,5 @@
+#!/bin/bash
+
+# sets stack capacity to infinity, prevents segmentation fault and stack overflow errors
 ulimit -s unlimited
 ./planetGen

@@ -879,30 +879,17 @@ void SurfaceTriangle::WaveDoubleFromTagInternal(int ctrl_index, int tag) {
 	return;
 }
 
-Bitmap * SurfaceTriangle::ExportBitmap(int x_size, int y_size) {
-	if(x_size <= 0 || y_size <= 0)
-		return NULL;
+void SurfaceTriangle::ExportSurfaceToBitmap(Bitmap * bitmap) {
+	this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
 
-	Bitmap * bitmap = new Bitmap();
-	bitmap->bitmap = new BitmapPixel **[x_size];
-
-	for(int i = 0; i < x_size; i++) {
-		bitmap->bitmap[i] = new BitmapPixel *[y_size];
-
-		for(int j = 0; j < y_size; j++) {
-			bitmap->bitmap[i][j] = new BitmapPixel();
-
-			bitmap->bitmap[i][j]->u_coordinate = bitmap->ToCoordsU(i,j);
-			bitmap->bitmap[i][j]->v_coordinate = bitmap->ToCoordsV(i,j);
+	for(int i = 0; i < bitmap->x_size; i++) {
+		for(int j = 0; j < bitmap->y_size; j++) {
+			bitmap->bitmap[i][j]->control1 = 0;
+			bitmap->bitmap[i][j]->controlDouble = ALMOST_INFINITY;
 		}
 	}
 
-	return bitmap;
-
-}
-
-Bitmap * SurfaceTriangle::ExportSurfaceToBitmap(Bitmap * bitmap) {
-	this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
+	this->ExportSurfaceToBitmapInternal(bitmap);
 }
 
 void SurfaceTriangle::ExportSurfaceToBitmapInternal(Bitmap * bitmap) {

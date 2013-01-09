@@ -58,9 +58,7 @@ public:
 
 	void CreateSphericalCoordinates();
 
-	static Bitmap * ExportBitmap(int x_size, int y_size);
-
-	Bitmap * ExportSurfaceToBitmap(Bitmap * bitmap);
+	void ExportSurfaceToBitmap(Bitmap * bitmap);
 
 private:
 	void NullControlsInternal(const int stage, bool delete_234controls = false);

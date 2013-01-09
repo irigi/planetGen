@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <math.h>
 #include "Surface.h"
+#include "Bitmap.h"
+#include "PhysicalData.h"
 
 int main(int argc, char* argv[]) {
 
@@ -22,6 +24,9 @@ int main(int argc, char* argv[]) {
 	dite = level7;
 
 	dite->CreateSphericalCoordinates();
+
+	Bitmap * bitmap = new Bitmap(4096, 2048);
+	dite->ExportSurfaceToBitmap(bitmap);
 
 	//dite->PrintSurface();
 
