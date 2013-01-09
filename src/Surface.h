@@ -44,6 +44,7 @@ public:
 	double GetDoubleTag() { return _doubleControl; }
 	void SetDoubleTag(double setto) { _doubleControl = setto; }
 	SurfaceTriangle ** GetAllCellsWithGivenTag(int ctrl_index, int tag);
+	SurfaceTriangle ** GetAllNeighborsWithGivenTag(int ctrl_index, int tag, SurfaceTriangle ** array);
 	static SurfaceTriangle ** SortAccordingToDoubleControl(SurfaceTriangle ** list);
 
 	void PrintSurface();

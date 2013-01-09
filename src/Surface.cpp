@@ -272,7 +272,6 @@ void SurfaceTriangle::WaveTagCtrl234Internal(int ctrl_index, int tag, int max, b
 	return;
 }
 
-
 SurfaceTriangle * SurfaceTriangle::FindFirstTagValue(int ctrl_index, int tag) {
 	// illegal index variable
 	if(ctrl_index <= 1 || ctrl_index > MaxIntCtrl)
@@ -564,7 +563,8 @@ void SurfaceTriangle::CreateSphericalCoordinates() {
 
 	int i = 1;
 	this->WaveDoubleFromTag(2, 0);
-	while((array = this->GetAllCellsWithGivenTag(2,i)) != NULL) {
+	array = this->GetAllCellsWithGivenTag(2,0);
+	while((array = this->GetAllNeighborsWithGivenTag(2,i,array)) != NULL) {
 		SortAccordingToDoubleControl(array);
 
 		int j = 0;
@@ -612,6 +612,50 @@ void SurfaceTriangle::CreateSphericalCoordinatesInternal(int max2) {
 	AllAround[0]->CreateSphericalCoordinatesInternal(max2);
 	AllAround[1]->CreateSphericalCoordinatesInternal(max2);
 	AllAround[2]->CreateSphericalCoordinatesInternal(max2);
+}
+
+SurfaceTriangle ** SurfaceTriangle::GetAllNeighborsWithGivenTag(int ctrl_index, int tag, SurfaceTriangle ** array) {
+	if(array == NULL)
+		return NULL;
+
+	int i = 0, cells_to_return = 0;
+	while(array[i] != NULL) {
+		if(array[i]->AllAround[0]->GetTagCtrl234(ctrl_index) == tag)
+			cells_to_return++;
+		if(array[i]->AllAround[1]->GetTagCtrl234(ctrl_index) == tag)
+					cells_to_return++;
+		if(array[i]->AllAround[2]->GetTagCtrl234(ctrl_index) == tag)
+					cells_to_return++;
+		i++;
+	}
+
+	SurfaceTriangle ** ret = new SurfaceTriangle *[cells_to_return+1];
+	for(int i = 0; i < cells_to_return+1; i++)
+		ret[i] = NULL;
+
+	i = 0;
+	int n = 0;
+	while(array[i] != NULL) {
+		if(array[i]->AllAround[0]->GetTagCtrl234(ctrl_index) == tag) {
+			ret[n] = array[i]->AllAround[0];
+			n++;
+		}
+
+		if(array[i]->AllAround[1]->GetTagCtrl234(ctrl_index) == tag) {
+			ret[n] = array[i]->AllAround[1];
+			n++;
+		}
+
+		if(array[i]->AllAround[2]->GetTagCtrl234(ctrl_index) == tag) {
+			ret[n] = array[i]->AllAround[2];
+			n++;
+		}
+
+		i++;
+	}
+
+
+	return ret;
 }
 
 SurfaceTriangle ** SurfaceTriangle::GetAllCellsWithGivenTag(int ctrl_index, int tag) {
