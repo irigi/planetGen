@@ -20,8 +20,8 @@ bin_PROGRAMS = planetGen
 ## the C++ compiler to produce an object file (.o) from each source file. The
 ## header files (.h) do not result in object files by themselves, but will be
 ## included in distribution archives of the project.
-planetGen_SOURCES = src/Surface.h src/PhysicalData.h src/Bitmap.h \
-					src/Surface.cpp src/PhysicalData.cpp src/Bitmap.cpp \
+planetGen_SOURCES = src/Surface.h src/PhysicalData.h src/Bitmap.h src/UserSettings.h \
+					src/Surface.cpp src/PhysicalData.cpp src/Bitmap.cpp src/UserSettings.cpp \
 					src/main.cpp 
 
 ## Define an independent executable script for inclusion in the distribution
