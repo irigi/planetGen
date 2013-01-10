@@ -92,10 +92,12 @@ void Bitmap::WaveDefinedPixelsSpherical() {
 	for(int i = 0; i < x_size; i++) {
 		for(int j = 0; j < y_size;j++) {
 			if(bitmap[i][j]->control1 == 1) {
-				for(int k = 0; k < max_steps; k++) {
-					float max = (k+1) * 3*M_PI/max_steps;
+				//for(int k = 0; k < max_steps; k++) {
+					//float max = (k+1) * 3*M_PI/max_steps;
+					float max = 0.1;
+					printf("bitmap wave, max %f, %d %d\n", max, i,j);
 					this->WaveDefinedPixelsSphericalInternal(i, j, 0, max);
-				}
+				//}
 			}
 		}
 	}
@@ -109,7 +111,7 @@ void Bitmap::WaveDefinedPixelsSphericalInternal(int i, int j, float tag, float m
 	if(tag > max)
 		return;
 
-	if(bitmap[i][j]->controlFloat <= tag)
+	if(bitmap[i][j]->controlFloat < tag)
 		return;
 	else {
 		bitmap[i][j]->controlFloat = tag;

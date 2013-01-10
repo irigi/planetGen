@@ -18,15 +18,15 @@ int main(int argc, char* argv[]) {
 	level5 = level4->SubdivideSurface();
 	level6 = level5->SubdivideSurface();
 	level7 = level6->SubdivideSurface();
-	//level8 = level7->SubdivideSurface();
-	//level9 = level8->SubdivideSurface();
+	level8 = level7->SubdivideSurface();
+	level9 = level8->SubdivideSurface();
 
-	dite = level7;
+	dite = level9;
 
 	dite->CreateSphericalCoordinates();
 
-	Bitmap * bitmap = new Bitmap(4096, 2048, MAP_PROJECTION_DEFAULT);
-	dite->ExportSurfaceToBitmap(bitmap, CODE_UCOORD);
+	//Bitmap * bitmap = new Bitmap(4096, 2048, MAP_PROJECTION_DEFAULT);
+	//dite->ExportSurfaceToBitmap(bitmap, CODE_UCOORD);
 
 	//dite->PrintSurface();
 

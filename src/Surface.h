@@ -37,6 +37,7 @@ public:
 	SurfaceTriangle * FindTrulyRandomPoint();
 
 	void WaveDoubleFromTag(int ctrl_index, int tag);
+	void SpreadDoubleFrom(int ctrl_index, int tag);
 
 	int GetTagCtrl234(int ctrl_index);							// returns value of the ctrl variable
 	int GetMaxTagCtrl234(int ctrl_index);					// returns max value of the ctrl variable on the surface

@@ -233,9 +233,11 @@ int SurfaceTriangle::WaveTagCtrl234(int ctrl_index, int tag) {
 	if(DEBUG_WAVE) _debug = 0;
 
 	// this prevents almost infinite diving into the recursion while preserving the generality
+	if(DEBUG_WAVE) printf("  WaveTagCtrl234: max %d\n", max);
 	this->WaveTagCtrl234Internal(ctrl_index, tag, max);
 	while((ret=this->GetMaxTagCtrl234(ctrl_index)) == ALMOST_INFINITY) {
 		max *= 2;
+		if(DEBUG_WAVE) printf("  WaveTagCtrl234: max %d\n", max);
 		this->WaveTagCtrl234Internal(ctrl_index, tag, max);
 	}
 	if(DEBUG_WAVE) printf("WaveTagCtrl234: recursion calls %ld\n", _debug);
@@ -559,16 +561,22 @@ void SurfaceTriangle::CreateSphericalCoordinates() {
 	// point at which this is called will be the north pole
 
 	this->NullControls();
+	printf("Spherical coordinates -- starting wave tag algorithm\n");
 	int out1 = this->WaveTagCtrl234(2, 0);
 
 	SurfaceTriangle ** array = NULL;
 
+	printf("Spherical coordinates -- starting wave double algorithm\n");
 	int i = 1;
 	this->WaveDoubleFromTag(2, 0);
 	array = this->GetAllCellsWithGivenTag(2,1);
 	while(array != NULL) {
+		printf("Spherical coordinates -- next while, i = %d\n", i);
+
+		// sort the array according to the longitude-to-be
 		SortAccordingToDoubleControl(array);
 
+		// calculate array length
 		int j = 0;
 		if(array != NULL) {
 			while(array[j] != NULL) {
@@ -578,20 +586,19 @@ void SurfaceTriangle::CreateSphericalCoordinates() {
 			//printf("\n");
 		}
 
+		// rewrite the doubles by true longitudes
 		for(int k = 0; k < j; k++) {
 			array[k]->SetDoubleTag(double(k)/j*M_PI*2);
 		}
 
-		//j = 0;
-		//if(array != NULL) {
-		//	while(array[j] != NULL) {
-		//		printf("..%d (%f)",array[j]->GetID(), array[j]->GetDoubleTag());
-		//		j++;
-		//	}
-		//	printf("\n");
-		//}
-
-		this->WaveDoubleFromTag(2, i);
+		// spread the latitude to proper neighbors
+		j = 0;
+		if(array != NULL) {
+			while(array[j] != NULL) {
+				array[j]->SpreadDoubleFrom(2, i);
+				j++;
+			}
+		}
 
 		// delete old array and create new one
 		SurfaceTriangle ** tmp = array;
@@ -607,6 +614,7 @@ void SurfaceTriangle::CreateSphericalCoordinates() {
 		i++;
 	}
 
+	printf("Spherical coordinates -- starting recursive coordinate function\n");
 	this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
 	this->CreateSphericalCoordinatesInternal(out1);
 }
@@ -877,6 +885,47 @@ void SurfaceTriangle::WaveDoubleFromTagInternal(int ctrl_index, int tag) {
 	AllAround[2]->WaveDoubleFromTagInternal(ctrl_index, tag);
 
 	return;
+}
+
+void SurfaceTriangle::SpreadDoubleFrom(int ctrl_index, int tag) {
+	if(this->GetTagCtrl234(ctrl_index) != tag) {
+		printf("wrong call of SpreadDoubleFrom -- %d %d\n", this->GetTagCtrl234(ctrl_index), tag);
+		return;
+	}
+
+	// there is only one way to spread -- no problems with orientation
+	if(int(AllAround[0]->GetTagCtrl234(ctrl_index) == tag+1) +
+			int(AllAround[1]->GetTagCtrl234(ctrl_index) == tag+1) +
+			int(AllAround[2]->GetTagCtrl234(ctrl_index) == tag+1) == 1) {
+
+		if(AllAround[0]->GetTagCtrl234(ctrl_index) == tag+1) {
+			AllAround[0]->SetDoubleTag(_doubleControl);
+		}
+		if(AllAround[1]->GetTagCtrl234(ctrl_index) == tag+1) {
+			AllAround[1]->SetDoubleTag(_doubleControl);
+		}
+		if(AllAround[2]->GetTagCtrl234(ctrl_index) == tag+1) {
+			AllAround[2]->SetDoubleTag(_doubleControl);
+		}
+	}
+
+	if(int(AllAround[0]->GetTagCtrl234(ctrl_index) == tag+1) +
+			int(AllAround[1]->GetTagCtrl234(ctrl_index) == tag+1) +
+			int(AllAround[2]->GetTagCtrl234(ctrl_index) == tag+1) == 2) {
+
+		if(AllAround[0]->GetTagCtrl234(ctrl_index) == tag-1) {
+			AllAround[1]->SetDoubleTag(_doubleControl-0.001);
+			AllAround[2]->SetDoubleTag(_doubleControl+0.001);
+		}
+		if(AllAround[1]->GetTagCtrl234(ctrl_index) == tag-1) {
+			AllAround[2]->SetDoubleTag(_doubleControl-0.001);
+			AllAround[0]->SetDoubleTag(_doubleControl+0.001);
+		}
+		if(AllAround[2]->GetTagCtrl234(ctrl_index) == tag-1) {
+			AllAround[0]->SetDoubleTag(_doubleControl-0.001);
+			AllAround[1]->SetDoubleTag(_doubleControl+0.001);
+		}
+	}
 }
 
 void SurfaceTriangle::ExportSurfaceToBitmap(Bitmap * bitmap, int  valueCode) {
