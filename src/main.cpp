@@ -25,10 +25,10 @@ int main(int argc, char* argv[]) {
 
 	dite->CreateSphericalCoordinates();
 
-	Bitmap * bitmap = new Bitmap(4096, 2048);
-	dite->ExportSurfaceToBitmap(bitmap);
+	Bitmap * bitmap = new Bitmap(4096, 2048, MAP_PROJECTION_DEFAULT);
+	dite->ExportSurfaceToBitmap(bitmap, CODE_UCOORD);
 
 	//dite->PrintSurface();
 
-	printf("Under von Construction %d %d %d\n", int(round(0.499)), int(round(0.500)), int(round(0.501)));
+	printf("Under von Construction %lu %lu %lu\n", sizeof(PhysicalData), sizeof(BitmapPixel), sizeof(SurfaceTriangle));
 }

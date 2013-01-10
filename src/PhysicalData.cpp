@@ -22,3 +22,25 @@ PhysicalData::PhysicalData(PhysicalData * data) {
 	u_coordinate = data->u_coordinate;
 	v_coordinate = data->v_coordinate;
 }
+
+float PhysicalData::ValueToStore(int valueCode) {
+	switch(valueCode) {
+	case CODE_TEMPERATURE:
+		return temperature;
+		break;
+	case CODE_RAINFALL:
+		return rainfall;
+		break;
+	case CODE_SOLCONST:
+		return solarConstant;
+		break;
+	case CODE_UCOORD:
+		return u_coordinate;
+		break;
+	case CODE_VCOORD:
+		return v_coordinate;
+		break;
+	}
+
+	return 0;
+}

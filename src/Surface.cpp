@@ -879,28 +879,29 @@ void SurfaceTriangle::WaveDoubleFromTagInternal(int ctrl_index, int tag) {
 	return;
 }
 
-void SurfaceTriangle::ExportSurfaceToBitmap(Bitmap * bitmap) {
+void SurfaceTriangle::ExportSurfaceToBitmap(Bitmap * bitmap, int  valueCode) {
 	this->FloodTagCtrl1(SURFACE_CONTROL_TAG1);
 
 	for(int i = 0; i < bitmap->x_size; i++) {
 		for(int j = 0; j < bitmap->y_size; j++) {
 			bitmap->bitmap[i][j]->control1 = 0;
-			bitmap->bitmap[i][j]->controlDouble = ALMOST_INFINITY;
+			bitmap->bitmap[i][j]->controlFloat = ALMOST_INFINITY;
 		}
 	}
 
-	this->ExportSurfaceToBitmapInternal(bitmap);
+	this->ExportSurfaceToBitmapInternal(bitmap, valueCode);
+	bitmap->WaveDefinedPixelsSpherical();
 }
 
-void SurfaceTriangle::ExportSurfaceToBitmapInternal(Bitmap * bitmap) {
+void SurfaceTriangle::ExportSurfaceToBitmapInternal(Bitmap * bitmap, int  valueCode) {
 	if(_intControl1 != SURFACE_CONTROL_TAG1)
 		return;
 
 	_intControl1 = SURFACE_CONTROL_CLEAN;
 
-	AllAround[0]->ExportSurfaceToBitmapInternal(bitmap);
-	AllAround[1]->ExportSurfaceToBitmapInternal(bitmap);
-	AllAround[2]->ExportSurfaceToBitmapInternal(bitmap);
+	AllAround[0]->ExportSurfaceToBitmapInternal(bitmap,  valueCode);
+	AllAround[1]->ExportSurfaceToBitmapInternal(bitmap,  valueCode);
+	AllAround[2]->ExportSurfaceToBitmapInternal(bitmap,  valueCode);
 
 	int i, j;
 	i = bitmap->FromCoordsI(this->data->u_coordinate, this->data->v_coordinate);
@@ -912,8 +913,7 @@ void SurfaceTriangle::ExportSurfaceToBitmapInternal(Bitmap * bitmap) {
 	if(bitmap->bitmap[i][j]->control1 == 0) {
 		// we note that to this pixel, data from surface were written
 		bitmap->bitmap[i][j]->control1 = 1;
-		delete bitmap->bitmap[i][j]->data;
-		bitmap->bitmap[i][j]->data = new PhysicalData(this->data);
+		bitmap->bitmap[i][j]->value =  this->data->ValueToStore(valueCode);
 	}
 
 }

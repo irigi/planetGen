@@ -6,8 +6,6 @@
 #define SURFACE_CONTROL_TAG2	2
 #define SURFACE_CONTROL_INTERNAL	-42
 
-#define ALMOST_INFINITY 999999999
-
 #define DEBUG_WAVE false
 #define DEBUG_NULL false
 
@@ -58,7 +56,7 @@ public:
 
 	void CreateSphericalCoordinates();
 
-	void ExportSurfaceToBitmap(Bitmap * bitmap);
+	void ExportSurfaceToBitmap(Bitmap * bitmap, int  valueCode);
 
 private:
 	void NullControlsInternal(const int stage, bool delete_234controls = false);
@@ -71,7 +69,7 @@ private:
 	void CreateSphericalCoordinatesInternal(int max2);
 	SurfaceTriangle ** GetAllCellsWithGivenTagInternal(int ctrl_index, int tag);
 	void WaveDoubleFromTagInternal(int ctrl_index, int tag);
-	void ExportSurfaceToBitmapInternal(Bitmap * bitmap);
+	void ExportSurfaceToBitmapInternal(Bitmap * bitmap, int  valueCode);
 	int* GetTagCtrl234Pointer(int ctrl_index);			// returns address of the ctrl variable
 
 	SurfaceTriangle ** AllAround;									// neighbors of the cell
